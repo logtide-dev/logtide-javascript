@@ -24,6 +24,7 @@ test('homepage loads', async ({ page }) => {
 
 test('manual log is sent to mock server', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('status')).toHaveText('Ready');
   await page.getByTestId('log-button').click();
 
   const mockUrl = `http://127.0.0.1:${MOCK_SERVER_PORT}`;
@@ -40,6 +41,7 @@ test('manual log is sent to mock server', async ({ page }) => {
 
 test('manual log includes metadata', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('status')).toHaveText('Ready');
   await page.getByTestId('log-button').click();
 
   const mockUrl = `http://127.0.0.1:${MOCK_SERVER_PORT}`;
@@ -55,6 +57,7 @@ test('manual log includes metadata', async ({ page }) => {
 
 test('clicking span button sends OTLP spans', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('status')).toHaveText('Ready');
   await page.getByTestId('span-button').click();
 
   const mockUrl = `http://127.0.0.1:${MOCK_SERVER_PORT}`;
