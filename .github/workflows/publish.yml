@@ -1,0 +1,230 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g., v0.5.5)'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '10'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  # ====================
+  # Validate & Extract version
+  # ====================
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_stable: ${{ steps.version.outputs.is_stable }}
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          VERSION=${VERSION#v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+          if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_stable=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_stable=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ====================
+  # Build & Test
+  # ====================
+  validate:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    needs: prepare
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  # ====================
+  # Publish all packages to npm
+  # ====================
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: [prepare, validate]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Set version in all packages
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          echo "Setting version to ${VERSION} in all packages..."
+
+          # Update root package.json
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '${VERSION}';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+          # Update all workspace packages
+          for dir in packages/*/; do
+            if [ -f "${dir}package.json" ]; then
+              node -e "
+                const fs = require('fs');
+                const pkg = JSON.parse(fs.readFileSync('${dir}package.json', 'utf8'));
+                pkg.version = '${VERSION}';
+
+                // Update workspace dependencies to use exact version
+                for (const depKey of ['dependencies', 'devDependencies', 'peerDependencies']) {
+                  if (pkg[depKey]) {
+                    for (const [name, ver] of Object.entries(pkg[depKey])) {
+                      if (ver === 'workspace:*') {
+                        pkg[depKey][name] = '${VERSION}';
+                      }
+                    }
+                  }
+                }
+
+                fs.writeFileSync('${dir}package.json', JSON.stringify(pkg, null, 2) + '\n');
+              "
+              echo "  Updated ${dir}package.json to ${VERSION}"
+            fi
+          done
+
+      # Publish in dependency order: types -> core -> all others
+      - name: Publish @logtide/types
+        working-directory: packages/types
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/core
+        working-directory: packages/core
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/sdk-node
+        working-directory: packages/node
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/nextjs
+        working-directory: packages/nextjs
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/nuxt
+        working-directory: packages/nuxt
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/sveltekit
+        working-directory: packages/sveltekit
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/hono
+        working-directory: packages/hono
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/angular
+        working-directory: packages/angular
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/elysia
+        working-directory: packages/elysia
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Create publish summary
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          echo "## npm Packages Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Version: **${VERSION}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Install Command |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/types | \`npm i @logtide/types@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/core | \`npm i @logtide/core@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/sdk-node | \`npm i @logtide/sdk-node@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/nextjs | \`npm i @logtide/nextjs@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/nuxt | \`npm i @logtide/nuxt@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/sveltekit | \`npm i @logtide/sveltekit@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/hono | \`npm i @logtide/hono@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/angular | \`npm i @logtide/angular@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/elysia | \`npm i @logtide/elysia@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY

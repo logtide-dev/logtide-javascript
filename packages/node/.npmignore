@@ -1,0 +1,24 @@
+# Source files
+src/
+tests/
+examples/
+
+# Config files
+tsconfig.json
+vitest.config.ts
+.eslintrc*
+.prettierrc*
+
+# Development files
+*.log
+*.tsbuildinfo
+.DS_Store
+node_modules/
+
+# Test files
+coverage/
+*.test.ts
+*.spec.ts
+
+# Documentation (included via files field)
+# docs/

@@ -1,0 +1,102 @@
+{
+  "name": "@logtide/sdk-node",
+  "version": "0.5.5",
+  "description": "Official Node.js SDK for LogTide (logtide.dev) - Self-hosted log management with advanced features: retry logic, circuit breaker, query API, live streaming, and middleware support",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./middleware": {
+      "import": {
+        "types": "./dist/middleware/index.d.ts",
+        "default": "./dist/middleware/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/index.d.cts",
+        "default": "./dist/middleware/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "clean": "node -e \"require('fs').rmSync('dist', {recursive: true, force: true})\"",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "logtide",
+    "logging",
+    "logs",
+    "log-management",
+    "monitoring",
+    "observability",
+    "self-hosted",
+    "tracing",
+    "circuit-breaker",
+    "express-middleware",
+    "fastify-plugin"
+  ],
+  "author": "Polliog <giuseppe@solture.it>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/logtide-dev/logtide-javascript.git",
+    "directory": "packages/node"
+  },
+  "homepage": "https://github.com/logtide-dev/logtide-javascript#readme",
+  "bugs": {
+    "url": "https://github.com/logtide-dev/logtide-javascript/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.15",
+    "express": "^5.1.0",
+    "fastify": "^5.7.2",
+    "fastify-plugin": "^4.5.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.5.4",
+    "vitest": "^1.6.0"
+  },
+  "peerDependencies": {
+    "express": "^4.0.0 || ^5.0.0",
+    "fastify": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    },
+    "fastify": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "overrides": {
+    "qs": ">=6.14.1",
+    "esbuild": ">=0.25.0"
+  }
+}
