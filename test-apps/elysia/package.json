@@ -1,0 +1,19 @@
+{
+  "name": "test-app-elysia",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@logtide/elysia": "workspace:*",
+    "@logtide/core": "workspace:*",
+    "elysia": "^1.2.0"
+  },
+  "devDependencies": {
+    "logtide-mock-server": "workspace:*",
+    "vitest": "^3.0.0",
+    "typescript": "^5.7.0"
+  }
+}

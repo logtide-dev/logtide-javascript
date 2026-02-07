@@ -40,6 +40,15 @@ coverage/
 .temp/
 tmp/
 
+# Framework build output
+.next/
+.nuxt/
+.output/
+.angular/
+
+# Auto-generated
+next-env.d.ts
+
 # Claude
 .claude/
 tmpclaude*

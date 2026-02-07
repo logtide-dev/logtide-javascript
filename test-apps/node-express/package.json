@@ -1,0 +1,19 @@
+{
+  "name": "test-app-node-express",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@logtide/sdk-node": "workspace:*",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "logtide-mock-server": "workspace:*",
+    "vitest": "^3.0.0",
+    "typescript": "^5.7.0"
+  }
+}

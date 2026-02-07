@@ -1,2 +1,11 @@
 packages:
   - "packages/*"
+  - "test-apps/mock-server"
+  - "test-apps/node-express"
+  - "test-apps/node-fastify"
+  - "test-apps/hono"
+  - "test-apps/elysia"
+  - "test-apps/nextjs"
+  - "test-apps/nuxt"
+  - "test-apps/sveltekit"
+  - "test-apps/angular"

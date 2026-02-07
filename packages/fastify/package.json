@@ -1,0 +1,57 @@
+{
+  "name": "@logtide/fastify",
+  "version": "0.5.5",
+  "description": "LogTide SDK plugin for Fastify — request tracing and error capture",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "node -e \"require('fs').rmSync('dist', {recursive: true, force: true})\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/logtide-dev/logtide-javascript.git",
+    "directory": "packages/fastify"
+  },
+  "homepage": "https://github.com/logtide-dev/logtide-javascript#readme",
+  "bugs": {
+    "url": "https://github.com/logtide-dev/logtide-javascript/issues"
+  },
+  "author": "Polliog <giuseppe@solture.it>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@logtide/core": "workspace:*",
+    "@logtide/types": "workspace:*",
+    "fastify-plugin": "^5.0.0"
+  },
+  "peerDependencies": {
+    "fastify": "^4.0.0 || ^5.0.0"
+  },
+  "devDependencies": {
+    "fastify": "^5.2.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.5.4"
+  }
+}

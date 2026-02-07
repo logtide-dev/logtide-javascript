@@ -22,13 +22,15 @@
 |---------|---------|-------------|
 | [`@logtide/types`](./packages/types) | [![npm](https://img.shields.io/npm/v/@logtide/types?color=blue)](https://www.npmjs.com/package/@logtide/types) | Shared type definitions |
 | [`@logtide/core`](./packages/core) | [![npm](https://img.shields.io/npm/v/@logtide/core?color=blue)](https://www.npmjs.com/package/@logtide/core) | Core client, hub, transports, and utilities |
-| [`@logtide/sdk-node`](./packages/node) | [![npm](https://img.shields.io/npm/v/@logtide/sdk-node?color=blue)](https://www.npmjs.com/package/@logtide/sdk-node) | Node.js SDK with Express & Fastify middleware |
+| [`@logtide/express`](./packages/express) | [![npm](https://img.shields.io/npm/v/@logtide/express?color=blue)](https://www.npmjs.com/package/@logtide/express) | Express middleware |
+| [`@logtide/fastify`](./packages/fastify) | [![npm](https://img.shields.io/npm/v/@logtide/fastify?color=blue)](https://www.npmjs.com/package/@logtide/fastify) | Fastify plugin |
 | [`@logtide/nextjs`](./packages/nextjs) | [![npm](https://img.shields.io/npm/v/@logtide/nextjs?color=blue)](https://www.npmjs.com/package/@logtide/nextjs) | Next.js integration (App Router & Pages) |
 | [`@logtide/nuxt`](./packages/nuxt) | [![npm](https://img.shields.io/npm/v/@logtide/nuxt?color=blue)](https://www.npmjs.com/package/@logtide/nuxt) | Nuxt 3 module with Nitro hooks |
 | [`@logtide/sveltekit`](./packages/sveltekit) | [![npm](https://img.shields.io/npm/v/@logtide/sveltekit?color=blue)](https://www.npmjs.com/package/@logtide/sveltekit) | SvelteKit hooks integration |
 | [`@logtide/hono`](./packages/hono) | [![npm](https://img.shields.io/npm/v/@logtide/hono?color=blue)](https://www.npmjs.com/package/@logtide/hono) | Hono middleware |
 | [`@logtide/angular`](./packages/angular) | [![npm](https://img.shields.io/npm/v/@logtide/angular?color=blue)](https://www.npmjs.com/package/@logtide/angular) | Angular ErrorHandler, HTTP Interceptor |
 | [`@logtide/elysia`](./packages/elysia) | [![npm](https://img.shields.io/npm/v/@logtide/elysia?color=blue)](https://www.npmjs.com/package/@logtide/elysia) | Elysia plugin |
+| [`@logtide/sdk-node`](./packages/node) | [![npm](https://img.shields.io/npm/v/@logtide/sdk-node?color=blue)](https://www.npmjs.com/package/@logtide/sdk-node) | Legacy Node.js SDK _(use `@logtide/express` or `@logtide/fastify` instead)_ |
 
 ## Quick Start
 
@@ -36,13 +38,14 @@ Every framework package follows the same pattern — pass your DSN and service n
 
 ```bash
 # Install for your framework
+npm install @logtide/express   # Express
+npm install @logtide/fastify   # Fastify
 npm install @logtide/nextjs    # Next.js
 npm install @logtide/nuxt      # Nuxt 3
 npm install @logtide/sveltekit # SvelteKit
 npm install @logtide/hono      # Hono
 npm install @logtide/angular   # Angular
 npm install @logtide/elysia    # Elysia
-npm install @logtide/sdk-node  # Plain Node.js / Express / Fastify
 ```
 
 ```typescript
@@ -64,13 +67,15 @@ See each package's README for framework-specific setup instructions.
     ↓
 @logtide/core           ← Client, Hub, Scope, Transports, Integrations
     ↓
-├── @logtide/sdk-node   ← Standalone Node.js SDK
+├── @logtide/express    ← Express middleware
+├── @logtide/fastify    ← Fastify plugin
 ├── @logtide/nextjs     ← Next.js (App Router + Pages)
 ├── @logtide/nuxt       ← Nuxt 3 (Nitro + Vue)
 ├── @logtide/sveltekit  ← SvelteKit (handle/handleError/handleFetch)
 ├── @logtide/hono       ← Hono middleware
 ├── @logtide/angular    ← Angular (ErrorHandler + HttpInterceptor)
-└── @logtide/elysia     ← Elysia plugin
+├── @logtide/elysia     ← Elysia plugin
+└── @logtide/sdk-node   ← Legacy standalone Node.js SDK
 ```
 
 All framework packages share `@logtide/core` for:

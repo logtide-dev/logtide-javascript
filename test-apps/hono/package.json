@@ -1,0 +1,20 @@
+{
+  "name": "test-app-hono",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@logtide/hono": "workspace:*",
+    "@logtide/core": "workspace:*",
+    "hono": "^4.7.0",
+    "@hono/node-server": "^1.13.0"
+  },
+  "devDependencies": {
+    "logtide-mock-server": "workspace:*",
+    "vitest": "^3.0.0",
+    "typescript": "^5.7.0"
+  }
+}
