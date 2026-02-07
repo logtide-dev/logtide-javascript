@@ -18,28 +18,8 @@ test.beforeEach(async () => {
 });
 
 test('homepage loads', async ({ page }) => {
-  const errors: string[] = [];
-  const consoleMsgs: string[] = [];
-  page.on('pageerror', (err) => errors.push(err.message));
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') consoleMsgs.push(msg.text());
-  });
-
   await page.goto('/');
-
-  const status = page.getByTestId('status');
-  const found = await status.count();
-  if (found === 0) {
-    const html = await page.content();
-    console.log('=== PAGE HTML (first 2000 chars) ===');
-    console.log(html.substring(0, 2000));
-    console.log('=== PAGE ERRORS ===');
-    console.log(errors.join('\n') || '(none)');
-    console.log('=== CONSOLE ERRORS ===');
-    console.log(consoleMsgs.join('\n') || '(none)');
-  }
-
-  await expect(status).toHaveText('Ready');
+  await expect(page.getByTestId('status')).toHaveText('Ready');
 });
 
 test('manual log is sent to mock server', async ({ page }) => {

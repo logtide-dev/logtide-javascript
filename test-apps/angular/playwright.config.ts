@@ -12,11 +12,11 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? 'list' : 'html',
   use: {
-    baseURL: `http://127.0.0.1:${APP_PORT}`,
+    baseURL: `http://localhost:${APP_PORT}`,
     trace: 'on-first-retry',
   },
   webServer: {
-    command: `npx ng serve --port ${APP_PORT} --host 127.0.0.1`,
+    command: `npx ng serve --port ${APP_PORT}`,
     url: `http://localhost:${APP_PORT}`,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
