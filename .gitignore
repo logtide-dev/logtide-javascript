@@ -44,6 +44,7 @@ tmp/
 .next/
 .nuxt/
 .output/
+.angular/
 
 # Auto-generated
 next-env.d.ts

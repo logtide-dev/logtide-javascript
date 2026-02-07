@@ -8,3 +8,4 @@ packages:
   - "test-apps/nextjs"
   - "test-apps/nuxt"
   - "test-apps/sveltekit"
+  - "test-apps/angular"

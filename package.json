@@ -5,7 +5,7 @@
     "build": "pnpm -r --filter @logtide/* build",
     "test": "pnpm -r --filter @logtide/* test",
     "test:smoke": "pnpm -r --filter test-app-hono --filter test-app-elysia --filter test-app-node-express --filter test-app-node-fastify test",
-    "test:e2e": "pnpm -r --filter test-app-nextjs --filter test-app-sveltekit --filter test-app-nuxt test",
+    "test:e2e": "pnpm -r --filter test-app-nextjs --filter test-app-sveltekit --filter test-app-nuxt --filter test-app-angular test",
     "test:all": "pnpm test && pnpm test:smoke",
     "typecheck": "pnpm -r typecheck",
     "clean": "pnpm -r clean",
