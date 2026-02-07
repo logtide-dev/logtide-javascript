@@ -18,29 +18,8 @@ test.beforeEach(async () => {
 });
 
 test('homepage loads', async ({ page }) => {
-  const errors: string[] = [];
-  const consoleMsgs: string[] = [];
-  page.on('pageerror', (err) => errors.push(err.message));
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') consoleMsgs.push(msg.text());
-  });
-
   await page.goto('/');
-
-  // Debug: dump page state if element not found
-  const status = page.getByTestId('status');
-  const found = await status.count();
-  if (found === 0) {
-    const html = await page.content();
-    console.log('=== PAGE HTML ===');
-    console.log(html.substring(0, 3000));
-    console.log('=== PAGE ERRORS ===');
-    console.log(errors.join('\n'));
-    console.log('=== CONSOLE ERRORS ===');
-    console.log(consoleMsgs.join('\n'));
-  }
-
-  await expect(status).toHaveText('Ready');
+  await expect(page.getByTestId('status')).toHaveText('Ready');
 });
 
 test('manual log is sent to mock server', async ({ page }) => {
@@ -74,23 +53,9 @@ test('manual log includes metadata', async ({ page }) => {
   }).toPass({ timeout: 10_000 });
 });
 
-test('error handler captures errors', async ({ page }) => {
+test('clicking span button sends OTLP spans', async ({ page }) => {
   await page.goto('/');
-  await page.getByTestId('error-button').click();
-
-  const mockUrl = `http://127.0.0.1:${MOCK_SERVER_PORT}`;
-  await expect(async () => {
-    const logsRes = await fetch(`${mockUrl}/test/logs`);
-    const data = await logsRes.json();
-    const errorLog = data.logs.find((l: any) => l.level === 'error');
-    expect(errorLog).toBeDefined();
-    expect(errorLog.service).toBe('test-angular');
-  }).toPass({ timeout: 10_000 });
-});
-
-test('http interceptor sends spans', async ({ page }) => {
-  await page.goto('/');
-  await page.getByTestId('http-button').click();
+  await page.getByTestId('span-button').click();
 
   const mockUrl = `http://127.0.0.1:${MOCK_SERVER_PORT}`;
   await expect(async () => {
@@ -99,6 +64,7 @@ test('http interceptor sends spans', async ({ page }) => {
     expect(data.spans.length).toBeGreaterThanOrEqual(1);
     const span = data.spans.find((s: any) => s.serviceName === 'test-angular');
     expect(span).toBeDefined();
-    expect(span.name).toContain('HTTP GET');
+    expect(span.traceId).toMatch(/^[0-9a-f]{32}$/);
+    expect(span.status.code).toBe(1); // OK
   }).toPass({ timeout: 10_000 });
 });

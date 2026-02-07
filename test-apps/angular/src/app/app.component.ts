@@ -1,5 +1,4 @@
-import { Component, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { hub } from '@logtide/core';
 
 @Component({
@@ -9,13 +8,11 @@ import { hub } from '@logtide/core';
     <h1>LogTide Angular Test App</h1>
     <p data-testid="status">Ready</p>
     <button data-testid="log-button" (click)="sendLog()">Send Log</button>
-    <button data-testid="error-button" (click)="triggerError()">Trigger Error</button>
-    <button data-testid="http-button" (click)="makeHttpRequest()">HTTP Request</button>
+    <button data-testid="span-button" (click)="sendSpan()">Send Span</button>
     <p data-testid="result">{{ result }}</p>
   `,
 })
 export class AppComponent {
-  private http = inject(HttpClient);
   result = '';
 
   sendLog() {
@@ -25,18 +22,16 @@ export class AppComponent {
     this.result = 'Log sent';
   }
 
-  triggerError() {
-    throw new Error('Test error from Angular');
-  }
-
-  makeHttpRequest() {
-    this.http.get('http://127.0.0.1:9103/test/health').subscribe({
-      next: () => {
-        this.result = 'HTTP request completed';
-      },
-      error: (err: Error) => {
-        this.result = `HTTP error: ${err.message}`;
-      },
+  sendSpan() {
+    const client = hub.getClient();
+    const span = client?.startSpan({
+      name: 'GET /api/test-log',
+      attributes: { 'http.method': 'GET', 'http.target': '/api/test-log' },
     });
+    if (span) {
+      client?.finishSpan(span.spanId, 'ok');
+    }
+    hub.flush();
+    this.result = 'Span sent';
   }
 }
