@@ -148,7 +148,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [nextjs, sveltekit, nuxt]
+        app: [nextjs, sveltekit, nuxt, angular]
 
     steps:
       - name: Checkout
