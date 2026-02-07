@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Monorepo Structure
-- Restructured as pnpm monorepo with 11 packages under `packages/*`
+- Restructured as pnpm monorepo with 9 packages under `packages/*`
 - Unified versioning across all packages (0.5.5)
 - Version bump script (`pnpm version:set <version>`)
 
@@ -28,22 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Types (`@logtide/types`)
 - Shared TypeScript interfaces: `LogEntry`, `Span`, `Breadcrumb`, `Transport`, `Integration`, `ClientOptions`
 
-#### Express (`@logtide/express`)
-- Express middleware for automatic request tracing, error capture, breadcrumbs
-- W3C Trace Context propagation (`traceparent` in/out)
-- Scope accessible via `req.logtideScope`
-- Express 4 and 5 support
-
-#### Fastify (`@logtide/fastify`)
-- Fastify plugin with `onRequest`, `onResponse`, `onError` lifecycle hooks
-- Automatic request spans, error capture, `traceparent` propagation
-- Scope accessible via `request.logtideScope`
-- Fastify 4 and 5 support, wrapped with `fastify-plugin`
-
-#### Node.js SDK (`@logtide/sdk-node`) — Legacy
+#### Node.js SDK (`@logtide/sdk-node`)
 - Standalone Node.js client with batching, retry, circuit breaker, query API, live streaming
 - Express middleware and Fastify plugin for auto-logging HTTP requests
-- Marked as legacy — use `@logtide/express` or `@logtide/fastify` instead
 
 #### Next.js (`@logtide/nextjs`)
 - Server-side: `registerLogtide()` for `instrumentation.ts`, `captureRequestError` for `onRequestError`
