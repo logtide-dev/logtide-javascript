@@ -1,6 +1,6 @@
 {
   "name": "@logtide/nextjs",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "LogTide SDK integration for Next.js — auto error capture, request tracing, and performance spans",
   "type": "module",
   "main": "./dist/index.cjs",

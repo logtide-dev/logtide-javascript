@@ -1,6 +1,6 @@
 {
   "name": "@logtide/sveltekit",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "LogTide SDK integration for SvelteKit — handle, handleError, handleFetch hooks",
   "type": "module",
   "main": "./dist/index.cjs",

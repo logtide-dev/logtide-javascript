@@ -1,6 +1,6 @@
 {
   "name": "@logtide/express",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "LogTide SDK middleware for Express — request tracing and error capture",
   "type": "module",
   "main": "./dist/index.cjs",

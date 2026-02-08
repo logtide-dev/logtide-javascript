@@ -1,6 +1,6 @@
 {
   "name": "@logtide/core",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Core client, hub, scope, transports, and utilities for the LogTide SDK",
   "type": "module",
   "main": "./dist/index.cjs",
