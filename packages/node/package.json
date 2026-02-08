@@ -1,6 +1,6 @@
 {
   "name": "@logtide/sdk-node",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Official Node.js SDK for LogTide (logtide.dev) - Self-hosted log management with advanced features: retry logic, circuit breaker, query API, live streaming, and middleware support",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -74,7 +74,7 @@
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.15",
     "express": "^5.1.0",
-    "fastify": "^5.7.2",
+    "fastify": "^5.7.3",
     "fastify-plugin": "^4.5.1",
     "tsup": "^8.5.1",
     "typescript": "^5.5.4",
@@ -82,7 +82,7 @@
   },
   "peerDependencies": {
     "express": "^4.0.0 || ^5.0.0",
-    "fastify": "^4.0.0"
+    "fastify": "^4.0.0 || ^5.0.0"
   },
   "peerDependenciesMeta": {
     "express": {
