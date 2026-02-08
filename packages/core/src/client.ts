@@ -8,7 +8,7 @@ import type {
   Span,
   Transport,
 } from '@logtide/types';
-import { parseDSN } from './dsn';
+import { resolveDSN } from './dsn';
 import { Scope } from './scope';
 import { SpanManager, type StartSpanOptions } from './span-manager';
 import { BreadcrumbBuffer } from './breadcrumb-buffer';
@@ -26,7 +26,7 @@ class DefaultTransport implements Transport {
   private spanTransport: BatchTransport;
 
   constructor(options: ClientOptions) {
-    const dsn = parseDSN(options.dsn);
+    const dsn = resolveDSN(options);
 
     this.logTransport = new BatchTransport({
       inner: new LogtideHttpTransport(dsn),

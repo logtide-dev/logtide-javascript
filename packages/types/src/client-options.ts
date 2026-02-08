@@ -8,7 +8,11 @@ export interface DSN {
 
 export interface ClientOptions {
   /** DSN string: https://lp_APIKEY@api.logtide.dev */
-  dsn: string;
+  dsn?: string;
+  /** API base URL (alternative to DSN, e.g. 'http://localhost:8080') */
+  apiUrl?: string;
+  /** API key (alternative to DSN, e.g. 'lp_your_api_key_here') */
+  apiKey?: string;
   /** Service name for log attribution (optional, defaults to framework name) */
   service?: string;
   /** Environment (e.g. production, staging) */

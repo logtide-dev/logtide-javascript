@@ -53,6 +53,9 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptorsFromDi()),
     provideLogtide({
       dsn: 'https://lp_your_key@your-instance.com',
+      // Or use apiUrl + apiKey instead of dsn:
+      // apiUrl: 'https://your-instance.com',
+      // apiKey: 'lp_your_key',
       service: 'my-angular-app',
       environment: 'production',
     }),
@@ -73,6 +76,7 @@ import { getLogtideProviders } from '@logtide/angular';
   providers: [
     ...getLogtideProviders({
       dsn: 'https://lp_your_key@your-instance.com',
+      // Or: apiUrl + apiKey instead of dsn
       service: 'my-angular-app',
     }),
   ],

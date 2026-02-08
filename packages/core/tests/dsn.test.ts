@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseDSN } from '../src/dsn';
+import { parseDSN, resolveDSN } from '../src/dsn';
 
 describe('parseDSN', () => {
   it('should parse a DSN without path (new format)', () => {
@@ -52,5 +52,59 @@ describe('parseDSN', () => {
 
   it('should throw on empty string', () => {
     expect(() => parseDSN('')).toThrow('Invalid DSN');
+  });
+});
+
+describe('resolveDSN', () => {
+  it('should resolve from dsn string', () => {
+    const result = resolveDSN({ dsn: 'https://lp_key@api.logtide.dev' });
+    expect(result).toEqual({
+      apiUrl: 'https://api.logtide.dev',
+      apiKey: 'lp_key',
+    });
+  });
+
+  it('should resolve from apiUrl + apiKey', () => {
+    const result = resolveDSN({ apiUrl: 'http://localhost:8080', apiKey: 'lp_test_key' });
+    expect(result).toEqual({
+      apiUrl: 'http://localhost:8080',
+      apiKey: 'lp_test_key',
+    });
+  });
+
+  it('should strip trailing slash from apiUrl', () => {
+    const result = resolveDSN({ apiUrl: 'http://localhost:8080/', apiKey: 'lp_key' });
+    expect(result).toEqual({
+      apiUrl: 'http://localhost:8080',
+      apiKey: 'lp_key',
+    });
+  });
+
+  it('should prefer dsn over apiUrl + apiKey when both provided', () => {
+    const result = resolveDSN({
+      dsn: 'https://lp_dsn_key@api.logtide.dev',
+      apiUrl: 'http://localhost:8080',
+      apiKey: 'lp_other_key',
+    });
+    expect(result).toEqual({
+      apiUrl: 'https://api.logtide.dev',
+      apiKey: 'lp_dsn_key',
+    });
+  });
+
+  it('should throw when neither dsn nor apiUrl+apiKey provided', () => {
+    expect(() => resolveDSN({})).toThrow('Either "dsn" or both "apiUrl" and "apiKey" must be provided');
+  });
+
+  it('should throw when only apiUrl provided without apiKey', () => {
+    expect(() => resolveDSN({ apiUrl: 'http://localhost:8080' })).toThrow(
+      'Either "dsn" or both "apiUrl" and "apiKey" must be provided',
+    );
+  });
+
+  it('should throw when only apiKey provided without apiUrl', () => {
+    expect(() => resolveDSN({ apiKey: 'lp_key' })).toThrow(
+      'Either "dsn" or both "apiUrl" and "apiKey" must be provided',
+    );
   });
 });

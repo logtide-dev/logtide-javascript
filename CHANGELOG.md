@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### DSN Simplified
 - Removed redundant `projectId` from DSN format — the API key already embeds the project ID
 - New DSN format: `https://lp_APIKEY@host` (legacy format with path still accepted for backward compatibility)
+- Added `apiUrl` + `apiKey` as alternative to DSN string (backward compatible with `@logtide/sdk-node` config format)
+- Added `resolveDSN()` helper that accepts either `dsn` or `apiUrl` + `apiKey`
 - Removed `projectId` field from `DSN` interface (`@logtide/types`)
 - Removed `X-Project-Id` header from `LogtideHttpTransport` and `OtlpHttpTransport` (`@logtide/core`)
 
