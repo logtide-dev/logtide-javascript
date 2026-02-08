@@ -13,5 +13,13 @@
   },
   "devDependencies": {
     "vitest": "^3.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "tar": ">=7.5.7",
+      "esbuild": ">=0.25.0",
+      "webpack": ">=5.104.1",
+      "cookie": ">=0.7.0"
+    }
   }
 }
