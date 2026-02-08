@@ -49,7 +49,10 @@ export default defineNuxtConfig({
   modules: ['@logtide/nuxt'],
 
   logtide: {
-    dsn: 'https://lp_your_key@your-instance.com/project-id',
+    dsn: 'https://lp_your_key@your-instance.com',
+    // Or use apiUrl + apiKey instead of dsn:
+    // apiUrl: 'https://your-instance.com',
+    // apiKey: 'lp_your_key',
     service: 'my-nuxt-app',
     environment: 'production',
     release: '1.0.0',

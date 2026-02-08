@@ -1,6 +1,6 @@
 {
   "private": true,
-  "version": "0.5.5",
+  "version": "0.5.6",
   "scripts": {
     "build": "pnpm -r --filter @logtide/* build",
     "test": "pnpm -r --filter @logtide/* test",

@@ -17,6 +17,7 @@ export { trackNavigation } from './navigation';
  */
 export function initLogtide(options: ClientOptions): void {
   hub.init({
+    service: 'nextjs',
     ...options,
     integrations: [
       new GlobalErrorIntegration(),

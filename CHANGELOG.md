@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] - 2026-02-08
+
+### Changed
+
+#### DSN Simplified
+- Removed redundant `projectId` from DSN format — the API key already embeds the project ID
+- New DSN format: `https://lp_APIKEY@host` (legacy format with path still accepted for backward compatibility)
+- Added `apiUrl` + `apiKey` as alternative to DSN string (backward compatible with `@logtide/sdk-node` config format)
+- Added `resolveDSN()` helper that accepts either `dsn` or `apiUrl` + `apiKey`
+- Removed `projectId` field from `DSN` interface (`@logtide/types`)
+- Removed `X-Project-Id` header from `LogtideHttpTransport` and `OtlpHttpTransport` (`@logtide/core`)
+
+#### Dynamic Service Name
+- `service` in `ClientOptions` is now **optional** — each framework package defaults to its own name (`'express'`, `'fastify'`, `'hono'`, `'elysia'`, `'nextjs'`, `'sveltekit'`, `'nuxt'`, `'angular'`)
+- Added `service?: string` field and `setService()` method to `Scope` — allows overriding service name per-request or per-module
+- Service resolution chain: `scope.service` → `options.service` → framework default → `'unknown'`
+
+#### Mock Server
+- Removed `X-Project-Id` from CORS headers and request tracking
+
+#### Documentation
+- Updated DSN format examples across all package READMEs
+
 ## [0.5.5] - 2026-02-07
 
 ### Added
@@ -77,4 +100,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Root README with package table, architecture diagram, development guide
 - Branch protection documentation (`.github/BRANCH_PROTECTION.md`)
 
+[0.5.6]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.5.6
 [0.5.5]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.5.5

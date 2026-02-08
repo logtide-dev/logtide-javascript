@@ -27,6 +27,7 @@ export interface LogtideElysiaOptions extends ClientOptions {}
  */
 export function logtide(options: LogtideElysiaOptions) {
   hub.init({
+    service: 'elysia',
     ...options,
     integrations: [
       new ConsoleIntegration(),

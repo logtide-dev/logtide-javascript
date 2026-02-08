@@ -35,6 +35,7 @@ declare module 'fastify' {
 export const logtide = fp(
   (fastify: FastifyInstance, options: LogtideFastifyOptions, done: (err?: Error) => void) => {
     hub.init({
+      service: 'fastify',
       ...options,
       integrations: [
         new ConsoleIntegration(),

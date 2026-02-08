@@ -51,7 +51,10 @@ import { registerLogtide, captureRequestError } from '@logtide/nextjs/server';
 
 export async function register() {
   await registerLogtide({
-    dsn: 'https://lp_your_key@your-instance.com/project-id',
+    dsn: 'https://lp_your_key@your-instance.com',
+    // Or use apiUrl + apiKey instead of dsn:
+    // apiUrl: 'https://your-instance.com',
+    // apiKey: 'lp_your_key',
     service: 'my-nextjs-app',
     environment: process.env.NODE_ENV,
   });
@@ -72,7 +75,10 @@ import { useEffect } from 'react';
 import { initLogtide, trackNavigation } from '@logtide/nextjs/client';
 
 initLogtide({
-  dsn: 'https://lp_your_key@your-instance.com/project-id',
+  dsn: 'https://lp_your_key@your-instance.com',
+  // Or use apiUrl + apiKey instead of dsn:
+  // apiUrl: 'https://your-instance.com',
+  // apiKey: 'lp_your_key',
   service: 'my-nextjs-app',
 });
 
@@ -99,7 +105,7 @@ Initialize LogTide in Next.js `instrumentation.ts`. Automatically installs `Cons
 import { registerLogtide } from '@logtide/nextjs/server';
 
 await registerLogtide({
-  dsn: 'https://lp_key@host/project',
+  dsn: 'https://lp_key@host',
   service: 'my-app',
   environment: 'production',
   release: '1.0.0',
@@ -156,7 +162,7 @@ Initialize LogTide on the client side. Installs `GlobalErrorIntegration` for `un
 import { initLogtide } from '@logtide/nextjs/client';
 
 initLogtide({
-  dsn: 'https://lp_key@host/project',
+  dsn: 'https://lp_key@host',
   service: 'my-app',
 });
 ```

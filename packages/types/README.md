@@ -87,8 +87,8 @@ import type { ClientOptions, DSN } from '@logtide/types';
 
 | Type | Description |
 |------|-------------|
-| `ClientOptions` | Full configuration: DSN, service, batching, retry, circuit breaker, etc. |
-| `DSN` | Parsed DSN with `apiUrl`, `apiKey`, `projectId` |
+| `ClientOptions` | Full configuration: DSN (or `apiUrl` + `apiKey`), service, batching, retry, circuit breaker, etc. |
+| `DSN` | Parsed DSN with `apiUrl`, `apiKey` |
 
 ---
 

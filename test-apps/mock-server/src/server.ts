@@ -30,7 +30,6 @@ export interface MockServerState {
   requests: Array<{
     timestamp: number;
     apiKey: string | null;
-    projectId: string | null;
     endpoint: string;
     count: number;
   }>;
@@ -59,7 +58,7 @@ export function createMockServer() {
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, X-Project-Id');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
 
     if (method === 'OPTIONS') {
       res.writeHead(204);
@@ -69,7 +68,6 @@ export function createMockServer() {
 
     try {
       const apiKey = req.headers['x-api-key'] as string | undefined;
-      const projectId = req.headers['x-project-id'] as string | undefined;
 
       // Ingest endpoint - receives logs from SDK
       if (url.pathname === '/api/v1/ingest' && method === 'POST') {
@@ -81,7 +79,6 @@ export function createMockServer() {
         state.requests.push({
           timestamp: Date.now(),
           apiKey: apiKey ?? null,
-          projectId: projectId ?? null,
           endpoint: '/api/v1/ingest',
           count: logs.length,
         });
@@ -118,7 +115,6 @@ export function createMockServer() {
         state.requests.push({
           timestamp: Date.now(),
           apiKey: apiKey ?? null,
-          projectId: projectId ?? null,
           endpoint: '/v1/otlp/traces',
           count: spans.length,
         });

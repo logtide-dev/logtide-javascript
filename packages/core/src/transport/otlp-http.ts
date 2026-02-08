@@ -69,7 +69,6 @@ export class OtlpHttpTransport implements Transport {
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': this.dsn.apiKey,
-        'X-Project-Id': this.dsn.projectId,
       },
       body: JSON.stringify(payload),
     });

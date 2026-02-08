@@ -51,7 +51,14 @@ npm install @logtide/elysia    # Elysia
 ```typescript
 // Every integration follows the same pattern:
 {
-  dsn: 'https://lp_your_key@your-logtide-instance.com/project-id',
+  dsn: 'https://lp_your_key@your-logtide-instance.com',
+  service: 'my-app',
+}
+
+// Or use apiUrl + apiKey separately:
+{
+  apiUrl: 'https://your-logtide-instance.com',
+  apiKey: 'lp_your_key',
   service: 'my-app',
 }
 ```

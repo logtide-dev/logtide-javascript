@@ -7,7 +7,7 @@ import { defineNuxtPlugin, useRuntimeConfig } from '#app';
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig().public.logtide as {
     dsn: string;
-    service: string;
+    service?: string;
     environment?: string;
     release?: string;
     debug?: boolean;
@@ -17,7 +17,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   hub.init({
     dsn: config.dsn,
-    service: config.service,
+    service: config.service ?? 'nuxt',
     environment: config.environment,
     release: config.release,
     debug: config.debug,

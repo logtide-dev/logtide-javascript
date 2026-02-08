@@ -11,7 +11,7 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: {
     dsn: '',
-    service: 'nuxt-app',
+    service: 'nuxt',
   },
   setup(options, nuxt) {
     if (!options.dsn) {

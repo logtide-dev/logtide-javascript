@@ -35,6 +35,7 @@ declare global {
  */
 export function logtide(options: LogtideExpressOptions) {
   hub.init({
+    service: 'express',
     ...options,
     integrations: [
       new ConsoleIntegration(),

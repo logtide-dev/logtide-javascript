@@ -48,7 +48,10 @@ yarn add @logtide/sveltekit
 import { logtideHandle, logtideHandleError, logtideHandleFetch } from '@logtide/sveltekit/server';
 
 export const handle = logtideHandle({
-  dsn: 'https://lp_your_key@your-instance.com/project-id',
+  dsn: 'https://lp_your_key@your-instance.com',
+  // Or use apiUrl + apiKey instead of dsn:
+  // apiUrl: 'https://your-instance.com',
+  // apiKey: 'lp_your_key',
   service: 'my-sveltekit-app',
   environment: 'production',
 });
@@ -65,7 +68,8 @@ export const handleFetch = logtideHandleFetch();
 import { initLogtide } from '@logtide/sveltekit/client';
 
 initLogtide({
-  dsn: 'https://lp_your_key@your-instance.com/project-id',
+  dsn: 'https://lp_your_key@your-instance.com',
+  // Or: apiUrl + apiKey instead of dsn
   service: 'my-sveltekit-app',
 });
 ```

@@ -26,6 +26,7 @@ export interface LogtideHonoOptions extends ClientOptions {}
  */
 export function logtide(options: LogtideHonoOptions) {
   hub.init({
+    service: 'hono',
     ...options,
     integrations: [
       new ConsoleIntegration(),

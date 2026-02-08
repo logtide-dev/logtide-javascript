@@ -23,7 +23,7 @@ export { SpanManager, type StartSpanOptions } from './span-manager';
 export { BreadcrumbBuffer } from './breadcrumb-buffer';
 
 // DSN
-export { parseDSN } from './dsn';
+export { parseDSN, resolveDSN } from './dsn';
 
 // Transports
 export { LogtideHttpTransport } from './transport/logtide-http';

@@ -48,6 +48,7 @@ interface HandleFetchInput {
  */
 export function logtideHandle(options: ClientOptions) {
   hub.init({
+    service: 'sveltekit',
     ...options,
     integrations: [
       new ConsoleIntegration(),

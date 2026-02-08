@@ -21,6 +21,7 @@ export { instrumentRequest, finishRequest } from './request-handler';
  */
 export async function registerLogtide(options: ClientOptions): Promise<void> {
   hub.init({
+    service: 'nextjs',
     ...options,
     integrations: [
       new ConsoleIntegration(),

@@ -157,54 +157,77 @@ jobs:
 
       # Publish in dependency order: types -> core -> all others
       - name: Publish @logtide/types
+        continue-on-error: true
         working-directory: packages/types
         run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
       - name: Publish @logtide/core
+        continue-on-error: true
         working-directory: packages/core
         run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
       - name: Publish @logtide/sdk-node
+        continue-on-error: true
         working-directory: packages/node
         run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
+      - name: Publish @logtide/express
+        continue-on-error: true
+        working-directory: packages/express
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
+      - name: Publish @logtide/fastify
+        continue-on-error: true
+        working-directory: packages/fastify
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
       - name: Publish @logtide/nextjs
+        continue-on-error: true
         working-directory: packages/nextjs
         run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
       - name: Publish @logtide/nuxt
+        continue-on-error: true
         working-directory: packages/nuxt
         run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
       - name: Publish @logtide/sveltekit
+        continue-on-error: true
         working-directory: packages/sveltekit
         run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
       - name: Publish @logtide/hono
+        continue-on-error: true
         working-directory: packages/hono
         run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
       - name: Publish @logtide/angular
+        continue-on-error: true
         working-directory: packages/angular
         run: pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
       - name: Publish @logtide/elysia
+        continue-on-error: true
         working-directory: packages/elysia
         run: pnpm publish --no-git-checks --access public
         env:
@@ -222,6 +245,8 @@ jobs:
           echo "| @logtide/types | \`npm i @logtide/types@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/core | \`npm i @logtide/core@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/sdk-node | \`npm i @logtide/sdk-node@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/express | \`npm i @logtide/express@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/fastify | \`npm i @logtide/fastify@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/nextjs | \`npm i @logtide/nextjs@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/nuxt | \`npm i @logtide/nuxt@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/sveltekit | \`npm i @logtide/sveltekit@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY

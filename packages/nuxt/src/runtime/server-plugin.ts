@@ -13,7 +13,7 @@ import { defineNitroPlugin, getRequestURL, getRequestHeaders } from 'h3';
 export default defineNitroPlugin((nitroApp) => {
   const config = useRuntimeConfig().logtide as {
     dsn: string;
-    service: string;
+    service?: string;
     environment?: string;
     release?: string;
     debug?: boolean;
@@ -23,7 +23,7 @@ export default defineNitroPlugin((nitroApp) => {
 
   hub.init({
     dsn: config.dsn,
-    service: config.service,
+    service: config.service ?? 'nuxt',
     environment: config.environment,
     release: config.release,
     debug: config.debug,

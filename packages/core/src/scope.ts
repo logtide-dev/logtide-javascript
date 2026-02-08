@@ -5,6 +5,7 @@ import { BreadcrumbBuffer } from './breadcrumb-buffer';
 export class Scope {
   traceId: string;
   spanId?: string;
+  service?: string;
   tags: Record<string, string> = {};
   extras: Record<string, unknown> = {};
   private breadcrumbs: BreadcrumbBuffer;
@@ -13,6 +14,11 @@ export class Scope {
   constructor(traceId: string, maxBreadcrumbs = 100) {
     this.traceId = traceId;
     this.breadcrumbs = new BreadcrumbBuffer(maxBreadcrumbs);
+  }
+
+  setService(service: string): this {
+    this.service = service;
+    return this;
   }
 
   setTag(key: string, value: string): this {
@@ -51,6 +57,7 @@ export class Scope {
   clone(): Scope {
     const scope = new Scope(this.traceId);
     scope.spanId = this.spanId;
+    scope.service = this.service;
     scope.tags = { ...this.tags };
     scope.extras = { ...this.extras };
     for (const bc of this.breadcrumbs.getAll()) {

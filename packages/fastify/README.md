@@ -48,7 +48,10 @@ import { logtide } from '@logtide/fastify';
 const app = Fastify();
 
 await app.register(logtide, {
-  dsn: 'https://lp_your_key@your-instance.com/project-id',
+  dsn: 'https://lp_your_key@your-instance.com',
+  // Or use apiUrl + apiKey instead of dsn:
+  // apiUrl: 'https://your-instance.com',
+  // apiKey: 'lp_your_key',
   service: 'my-fastify-api',
   environment: 'production',
 });

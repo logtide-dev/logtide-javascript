@@ -33,6 +33,7 @@ export function provideLogtide(options: ClientOptions): EnvironmentProviders {
       useFactory: () => {
         return () => {
           hub.init({
+            service: 'angular',
             ...options,
             integrations: [
               new GlobalErrorIntegration(),
@@ -72,6 +73,7 @@ export function getLogtideProviders(options: ClientOptions): Provider[] {
       useFactory: () => {
         return () => {
           hub.init({
+            service: 'angular',
             ...options,
             integrations: [
               new GlobalErrorIntegration(),

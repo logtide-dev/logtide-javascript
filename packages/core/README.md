@@ -49,7 +49,10 @@ import { hub } from '@logtide/core';
 
 // Initialize once
 hub.init({
-  dsn: 'https://lp_your_key@your-instance.com/project-id',
+  dsn: 'https://lp_your_key@your-instance.com',
+  // Or use apiUrl + apiKey instead of dsn:
+  // apiUrl: 'https://your-instance.com',
+  // apiKey: 'lp_your_key',
   service: 'my-app',
 });
 
@@ -81,7 +84,10 @@ process.on('SIGTERM', () => hub.close());
 import { LogtideClient } from '@logtide/core';
 
 const client = new LogtideClient({
-  dsn: 'https://lp_your_key@your-instance.com/project-id',
+  dsn: 'https://lp_your_key@your-instance.com',
+  // Or use apiUrl + apiKey instead of dsn:
+  // apiUrl: 'https://your-instance.com',
+  // apiKey: 'lp_your_key',
   service: 'my-app',
 });
 
