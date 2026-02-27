@@ -1,6 +1,22 @@
 import type { InternalLogEntry, Span, Transport } from '@logtide/types';
 import type { DSN } from '@logtide/types';
 
+function serializeAttrValue(
+  value: string | number | boolean,
+): { stringValue: string } | { intValue: string } | { boolValue: boolean } {
+  if (typeof value === 'number') return { intValue: String(value) };
+  if (typeof value === 'boolean') return { boolValue: value };
+  return { stringValue: value };
+}
+
+function serializeAttrs(
+  attrs: Record<string, string | number | boolean | undefined>,
+): { key: string; value: ReturnType<typeof serializeAttrValue> }[] {
+  return (Object.entries(attrs) as [string, string | number | boolean | undefined][])
+    .filter((entry): entry is [string, string | number | boolean] => entry[1] !== undefined)
+    .map(([key, value]) => ({ key, value: serializeAttrValue(value) }));
+}
+
 /**
  * Convert internal spans to OTLP JSON trace format.
  * Follows the OpenTelemetry Protocol (OTLP/HTTP) JSON specification.
@@ -45,32 +61,14 @@ function toOtlpTracePayload(
               kind: 2, // SPAN_KIND_SERVER
               startTimeUnixNano: String(s.startTime * 1_000_000),
               endTimeUnixNano: String((s.endTime ?? s.startTime) * 1_000_000),
-              attributes: Object.entries(s.attributes).map(([key, value]) => ({
-                key,
-                value:
-                  typeof value === 'string'
-                    ? { stringValue: value }
-                    : typeof value === 'number'
-                      ? { intValue: String(value) }
-                      : { boolValue: value },
-              })),
+              attributes: serializeAttrs(s.attributes),
               status: {
                 code: s.status === 'error' ? 2 : s.status === 'ok' ? 1 : 0,
               },
               events: (s.events ?? []).map((e) => ({
                 name: e.name,
                 timeUnixNano: String(e.timestamp * 1_000_000),
-                attributes: Object.entries(e.attributes ?? {})
-                  .filter(([, v]) => v !== undefined)
-                  .map(([key, value]) => ({
-                    key,
-                    value:
-                      typeof value === 'number'
-                        ? { intValue: String(value) }
-                        : typeof value === 'boolean'
-                          ? { boolValue: value }
-                          : { stringValue: String(value) },
-                  })),
+                attributes: serializeAttrs(e.attributes ?? {}),
               })),
             })),
           },

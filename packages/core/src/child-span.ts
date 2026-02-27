@@ -1,4 +1,4 @@
-import type { Span, SpanAttributes } from '@logtide/types';
+import type { Span, SpanAttributes, SpanEvent } from '@logtide/types';
 import { hub } from './hub';
 import type { Scope } from './scope';
 
@@ -24,6 +24,10 @@ export function startChildSpan(name: string, scope: Scope, attributes?: SpanAttr
 /**
  * Finish a child span by ID via the hub client.
  */
-export function finishChildSpan(spanId: string, status: 'ok' | 'error' = 'ok'): void {
-  hub.getClient()?.finishSpan(spanId, status);
+export function finishChildSpan(
+  spanId: string,
+  status: 'ok' | 'error' = 'ok',
+  options?: { extraAttributes?: SpanAttributes; events?: SpanEvent[] },
+): void {
+  hub.getClient()?.finishSpan(spanId, status, options);
 }
