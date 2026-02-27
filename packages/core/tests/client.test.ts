@@ -107,6 +107,24 @@ describe('LogtideClient', () => {
     expect(transport.spans[0].endTime).toBeDefined();
   });
 
+  it('should finish a span with extraAttributes and events', () => {
+    const span = client.startSpan({ name: 'enriched-span', attributes: { 'http.method': 'POST' } });
+
+    client.finishSpan(span.spanId, 'ok', {
+      extraAttributes: { 'http.status_code': 201 },
+      events: [{ name: 'breadcrumb', timestamp: 1234567890, attributes: { type: 'http' } }],
+    });
+
+    expect(transport.spans).toHaveLength(1);
+    const finished = transport.spans[0];
+    expect(finished.status).toBe('ok');
+    expect(finished.attributes['http.method']).toBe('POST');
+    expect(finished.attributes['http.status_code']).toBe(201);
+    expect(finished.events).toHaveLength(1);
+    expect(finished.events![0].name).toBe('breadcrumb');
+    expect(finished.events![0].timestamp).toBe(1234567890);
+  });
+
   it('should create a scope with traceId', () => {
     const scope = client.createScope('my-trace');
     expect(scope.traceId).toBe('my-trace');

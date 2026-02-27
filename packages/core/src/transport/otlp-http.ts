@@ -5,14 +5,34 @@ import type { DSN } from '@logtide/types';
  * Convert internal spans to OTLP JSON trace format.
  * Follows the OpenTelemetry Protocol (OTLP/HTTP) JSON specification.
  */
-function toOtlpTracePayload(spans: Span[], serviceName: string) {
+function toOtlpTracePayload(
+  spans: Span[],
+  serviceName: string,
+  options?: { environment?: string; release?: string },
+) {
+  const resourceAttributes: { key: string; value: { stringValue: string } }[] = [
+    { key: 'service.name', value: { stringValue: serviceName } },
+  ];
+
+  if (options?.environment) {
+    resourceAttributes.push({
+      key: 'deployment.environment',
+      value: { stringValue: options.environment },
+    });
+  }
+
+  if (options?.release) {
+    resourceAttributes.push({
+      key: 'service.version',
+      value: { stringValue: options.release },
+    });
+  }
+
   return {
     resourceSpans: [
       {
         resource: {
-          attributes: [
-            { key: 'service.name', value: { stringValue: serviceName } },
-          ],
+          attributes: resourceAttributes,
         },
         scopeSpans: [
           {
@@ -37,6 +57,21 @@ function toOtlpTracePayload(spans: Span[], serviceName: string) {
               status: {
                 code: s.status === 'error' ? 2 : s.status === 'ok' ? 1 : 0,
               },
+              events: (s.events ?? []).map((e) => ({
+                name: e.name,
+                timeUnixNano: String(e.timestamp * 1_000_000),
+                attributes: Object.entries(e.attributes ?? {})
+                  .filter(([, v]) => v !== undefined)
+                  .map(([key, value]) => ({
+                    key,
+                    value:
+                      typeof value === 'number'
+                        ? { intValue: String(value) }
+                        : typeof value === 'boolean'
+                          ? { boolValue: value }
+                          : { stringValue: String(value) },
+                  })),
+              })),
             })),
           },
         ],
@@ -49,10 +84,14 @@ function toOtlpTracePayload(spans: Span[], serviceName: string) {
 export class OtlpHttpTransport implements Transport {
   private dsn: DSN;
   private serviceName: string;
+  private environment?: string;
+  private release?: string;
 
-  constructor(dsn: DSN, serviceName: string) {
+  constructor(dsn: DSN, serviceName: string, options?: { environment?: string; release?: string }) {
     this.dsn = dsn;
     this.serviceName = serviceName;
+    this.environment = options?.environment;
+    this.release = options?.release;
   }
 
   async sendLogs(_logs: InternalLogEntry[]): Promise<void> {
@@ -62,7 +101,10 @@ export class OtlpHttpTransport implements Transport {
   async sendSpans(spans: Span[]): Promise<void> {
     if (spans.length === 0) return;
 
-    const payload = toOtlpTracePayload(spans, this.serviceName);
+    const payload = toOtlpTracePayload(spans, this.serviceName, {
+      environment: this.environment,
+      release: this.release,
+    });
 
     const response = await fetch(`${this.dsn.apiUrl}/v1/otlp/traces`, {
       method: 'POST',
