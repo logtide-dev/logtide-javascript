@@ -1,7 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import type { ClientOptions } from '@logtide/types';
-import type { Scope } from '@logtide/core';
-import type { SpanEvent } from '@logtide/core';
+import type { Scope, SpanEvent } from '@logtide/core';
 import {
   hub,
   ConsoleIntegration,
@@ -23,6 +22,15 @@ declare module 'fastify' {
     logtideTraceId?: string;
   }
 }
+
+const SENSITIVE_HEADERS = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'x-api-key',
+  'x-auth-token',
+  'proxy-authorization',
+]);
 
 /**
  * Fastify plugin for LogTide — auto request tracing, error capture, breadcrumbs.
@@ -79,6 +87,7 @@ export const logtide = fp(
       }
 
       const scope = client.createScope(traceId);
+      const startTime = Date.now();
       const method = request.method;
       const pathname = request.url.split('?')[0];
 
@@ -124,9 +133,6 @@ export const logtide = fp(
         },
       });
 
-      // Record start time for duration calculation
-      const startTime = Date.now();
-
       // Make scope available on the request
       request.logtideScope = scope;
       request.logtideTraceId = traceId;
@@ -162,8 +168,8 @@ export const logtide = fp(
       }
 
       // Opt-in request body capture
-      if (options.includeRequestBody && (request as any).body != null) {
-        const bodyStr = JSON.stringify((request as any).body);
+      if (options.includeRequestBody && (request as unknown as { body?: unknown }).body != null) {
+        const bodyStr = JSON.stringify((request as unknown as { body?: unknown }).body);
         if (bodyStr && bodyStr !== '{}' && bodyStr !== 'null') {
           extraAttributes['http.request_body'] = bodyStr.slice(0, 4096);
         }
@@ -171,7 +177,6 @@ export const logtide = fp(
 
       // Opt-in request headers capture
       if (options.includeRequestHeaders) {
-        const SENSITIVE_HEADERS = new Set(['authorization', 'cookie', 'x-api-key', 'x-auth-token']);
         let headersToCapture: Record<string, string>;
 
         if (Array.isArray(options.includeRequestHeaders)) {
@@ -234,7 +239,7 @@ export const logtide = fp(
           'http.method': spanInfo.method,
           'http.url': request.url,
           'http.target': spanInfo.pathname,
-          'http.status_code': String(status),
+          'http.status_code': status,
           duration_ms: durationMs,
         }, scope);
       }

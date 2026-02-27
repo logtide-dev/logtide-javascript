@@ -1,1 +1,1 @@
-export { logtide, type LogtideExpressOptions } from './middleware';
+export { logtide, logtideErrorHandler, type LogtideExpressOptions } from './middleware';

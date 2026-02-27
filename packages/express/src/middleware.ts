@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { ClientOptions } from '@logtide/types';
-import type { Scope } from '@logtide/core';
-import type { SpanEvent } from '@logtide/core';
+import type { Scope, SpanEvent } from '@logtide/core';
 import {
   hub,
   ConsoleIntegration,
@@ -24,6 +23,15 @@ declare global {
     }
   }
 }
+
+const SENSITIVE_HEADERS = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'x-api-key',
+  'x-auth-token',
+  'proxy-authorization',
+]);
 
 /**
  * Express middleware for LogTide — auto request tracing, error capture, breadcrumbs.
@@ -73,6 +81,7 @@ export function logtide(options: LogtideExpressOptions) {
     }
 
     const scope = client.createScope(traceId);
+    const startTime = Date.now();
     const method = req.method;
     const pathname = req.path || req.url;
 
@@ -119,9 +128,6 @@ export function logtide(options: LogtideExpressOptions) {
       },
     });
 
-    // Record start time for duration calculation
-    const startTime = Date.now();
-
     // Make scope available on the request object
     req.logtideScope = scope;
     req.logtideTraceId = traceId;
@@ -156,7 +162,6 @@ export function logtide(options: LogtideExpressOptions) {
 
       // Opt-in request headers capture
       if (options.includeRequestHeaders) {
-        const SENSITIVE_HEADERS = new Set(['authorization', 'cookie', 'x-api-key', 'x-auth-token']);
         let headersToCapture: Record<string, string>;
 
         if (Array.isArray(options.includeRequestHeaders)) {
@@ -219,7 +224,7 @@ export function logtide(options: LogtideExpressOptions) {
           'http.method': method,
           'http.url': req.originalUrl || req.url,
           'http.target': pathname,
-          'http.status_code': String(status),
+          'http.status_code': status,
           duration_ms: durationMs,
         }, scope);
       }

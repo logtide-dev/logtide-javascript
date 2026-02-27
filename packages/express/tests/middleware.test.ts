@@ -325,7 +325,7 @@ describe('@logtide/express middleware', () => {
     expect(span.attributes['http.user_agent']).toBe('TestAgent/1.0');
   });
 
-  it('should not set http.user_agent when User-Agent header is absent', async () => {
+  it('should set http.user_agent when User-Agent header is present', async () => {
     const app = express();
     app.use(logtide({
       dsn: 'https://lp_key@api.logtide.dev/proj',
@@ -335,8 +335,6 @@ describe('@logtide/express middleware', () => {
     app.get('/no-ua', (_req, res) => { res.send('ok'); });
 
     await listen(app);
-    // fetch always sends a User-Agent; we can test that the attribute key exists only when provided
-    // Instead, verify presence when explicitly set
     await request(server, '/no-ua', { headers: { 'user-agent': 'CustomAgent/2.0' } });
 
     const span = transport.spans[0];
