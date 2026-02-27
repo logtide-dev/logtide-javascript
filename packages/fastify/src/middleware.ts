@@ -32,6 +32,21 @@ const SENSITIVE_HEADERS = new Set([
   'proxy-authorization',
 ]);
 
+function breadcrumbsToEvents(scope: Scope): SpanEvent[] {
+  return scope.getBreadcrumbs().map((b) => ({
+    name: b.message,
+    timestamp: b.timestamp,
+    attributes: {
+      'breadcrumb.type': b.type,
+      ...(b.category ? { 'breadcrumb.category': b.category } : {}),
+      ...(b.level ? { 'breadcrumb.level': b.level } : {}),
+      ...Object.fromEntries(
+        Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
+      ),
+    },
+  }));
+}
+
 /**
  * Fastify plugin for LogTide — auto request tracing, error capture, breadcrumbs.
  *
@@ -216,18 +231,7 @@ export const logtide = fp(
       }
 
       // Convert breadcrumbs to SpanEvents
-      const events: SpanEvent[] = (scope?.getBreadcrumbs() ?? []).map((bc) => ({
-        name: bc.message,
-        timestamp: bc.timestamp,
-        attributes: bc.data
-          ? Object.fromEntries(
-              Object.entries(bc.data).map(([k, v]) => [
-                k,
-                typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' ? v : String(v),
-              ]),
-            )
-          : undefined,
-      }));
+      const events: SpanEvent[] = scope ? breadcrumbsToEvents(scope) : [];
 
       client.finishSpan(spanInfo.spanId, status >= 500 ? 'error' : 'ok', {
         extraAttributes,
