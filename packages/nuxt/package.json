@@ -1,6 +1,6 @@
 {
   "name": "@logtide/nuxt",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "LogTide SDK integration for Nuxt — auto error capture, request tracing via Nitro hooks",
   "type": "module",
   "main": "./dist/module.cjs",
