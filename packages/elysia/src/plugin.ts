@@ -12,6 +12,21 @@ import Elysia from 'elysia';
 
 export interface LogtideElysiaOptions extends ClientOptions {}
 
+function breadcrumbsToEvents(scope: Scope): SpanEvent[] {
+  return scope.getBreadcrumbs().map((b) => ({
+    name: b.message,
+    timestamp: b.timestamp,
+    attributes: {
+      'breadcrumb.type': b.type,
+      ...(b.category ? { 'breadcrumb.category': b.category } : {}),
+      ...(b.level ? { 'breadcrumb.level': b.level } : {}),
+      ...Object.fromEntries(
+        Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
+      ),
+    },
+  }));
+}
+
 /**
  * Elysia plugin for LogTide — request tracing, error capture, breadcrumbs.
  *
@@ -134,18 +149,7 @@ export function logtide(options: LogtideElysiaOptions) {
       });
 
       // Convert breadcrumbs to SpanEvents
-      const events: SpanEvent[] = scope.getBreadcrumbs().map((b) => ({
-        name: b.message,
-        timestamp: b.timestamp,
-        attributes: {
-          'breadcrumb.type': b.type,
-          ...(b.category ? { 'breadcrumb.category': b.category } : {}),
-          ...(b.level ? { 'breadcrumb.level': b.level } : {}),
-          ...Object.fromEntries(
-            Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
-          ),
-        },
-      }));
+      const events: SpanEvent[] = breadcrumbsToEvents(scope);
 
       const extraAttributes: Record<string, string | number | boolean | undefined> = {
         'http.status_code': status,
@@ -187,18 +191,7 @@ export function logtide(options: LogtideElysiaOptions) {
         });
 
         // Convert breadcrumbs to SpanEvents
-        const events: SpanEvent[] = scope.getBreadcrumbs().map((b) => ({
-          name: b.message,
-          timestamp: b.timestamp,
-          attributes: {
-            'breadcrumb.type': b.type,
-            ...(b.category ? { 'breadcrumb.category': b.category } : {}),
-            ...(b.level ? { 'breadcrumb.level': b.level } : {}),
-            ...Object.fromEntries(
-              Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
-            ),
-          },
-        }));
+        const events: SpanEvent[] = breadcrumbsToEvents(scope);
 
         client.finishSpan(spanId, 'error', {
           extraAttributes: {

@@ -184,9 +184,13 @@ export const logtide = fp(
 
       // Opt-in request body capture
       if (options.includeRequestBody && (request as unknown as { body?: unknown }).body != null) {
-        const bodyStr = JSON.stringify((request as unknown as { body?: unknown }).body);
-        if (bodyStr && bodyStr !== '{}' && bodyStr !== 'null') {
-          extraAttributes['http.request_body'] = bodyStr.slice(0, 4096);
+        try {
+          const bodyStr = JSON.stringify((request as unknown as { body?: unknown }).body);
+          if (bodyStr && bodyStr !== '{}' && bodyStr !== 'null') {
+            extraAttributes['http.request_body'] = bodyStr.slice(0, 4096);
+          }
+        } catch {
+          // Ignore stringification errors for circular structures
         }
       }
 

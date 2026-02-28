@@ -169,9 +169,13 @@ export function logtide(options: LogtideExpressOptions) {
 
       // Opt-in request body capture
       if (options.includeRequestBody && req.body != null) {
-        const bodyStr = JSON.stringify(req.body);
-        if (bodyStr && bodyStr !== '{}' && bodyStr !== 'null') {
-          extraAttributes['http.request_body'] = bodyStr.slice(0, 4096);
+        try {
+          const bodyStr = JSON.stringify(req.body);
+          if (bodyStr && bodyStr !== '{}' && bodyStr !== 'null') {
+            extraAttributes['http.request_body'] = bodyStr.slice(0, 4096);
+          }
+        } catch {
+          // Ignore stringification errors for circular structures
         }
       }
 

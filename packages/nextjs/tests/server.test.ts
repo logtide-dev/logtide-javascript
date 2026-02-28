@@ -49,6 +49,7 @@ describe('@logtide/nextjs server', () => {
       expect(result!.spanId).toMatch(/^[0-9a-f]{16}$/);
       expect(result!.scope).toBeDefined();
       expect(result!.scope.traceId).toBe(result!.traceId);
+      expect(typeof result!.startTime).toBe('number');
     });
 
     it('should extract trace context from traceparent header', async () => {
@@ -82,6 +83,38 @@ describe('@logtide/nextjs server', () => {
       expect(bcs[0].message).toContain('GET /dashboard');
     });
 
+    it('should capture user-agent in span attributes', async () => {
+      const { instrumentRequest, finishRequest } = await import('../src/server/request-handler');
+
+      const request = {
+        headers: new Headers({ 'user-agent': 'TestAgent/1.0' }),
+        method: 'GET',
+        url: 'http://localhost:3000/api/ua-test',
+      };
+
+      const result = instrumentRequest(request);
+      finishRequest(result!.spanId, 200, result!.scope, result!.startTime);
+
+      expect(transport.spans).toHaveLength(1);
+      expect(transport.spans[0].attributes?.['http.user_agent']).toBe('TestAgent/1.0');
+    });
+
+    it('should capture query string in span attributes', async () => {
+      const { instrumentRequest, finishRequest } = await import('../src/server/request-handler');
+
+      const request = {
+        headers: new Headers(),
+        method: 'GET',
+        url: 'http://localhost:3000/api/search?q=hello&page=2',
+      };
+
+      const result = instrumentRequest(request);
+      finishRequest(result!.spanId, 200, result!.scope, result!.startTime);
+
+      expect(transport.spans).toHaveLength(1);
+      expect(transport.spans[0].attributes?.['http.query_string']).toBe('?q=hello&page=2');
+    });
+
     it('should return null when no client is initialized', async () => {
       await hub.close();
       const { instrumentRequest } = await import('../src/server/request-handler');
@@ -107,7 +140,7 @@ describe('@logtide/nextjs server', () => {
       };
 
       const result = instrumentRequest(request);
-      finishRequest(result!.spanId, 200);
+      finishRequest(result!.spanId, 200, result!.scope, result!.startTime);
 
       expect(transport.spans).toHaveLength(1);
       expect(transport.spans[0].status).toBe('ok');
@@ -123,10 +156,76 @@ describe('@logtide/nextjs server', () => {
       };
 
       const result = instrumentRequest(request);
-      finishRequest(result!.spanId, 500);
+      finishRequest(result!.spanId, 500, result!.scope, result!.startTime);
 
       expect(transport.spans).toHaveLength(1);
       expect(transport.spans[0].status).toBe('error');
+    });
+
+    it('should record http.status_code in span attributes', async () => {
+      const { instrumentRequest, finishRequest } = await import('../src/server/request-handler');
+
+      const request = {
+        headers: new Headers(),
+        method: 'GET',
+        url: 'http://localhost:3000/api/data',
+      };
+
+      const result = instrumentRequest(request);
+      finishRequest(result!.spanId, 201, result!.scope, result!.startTime);
+
+      expect(transport.spans).toHaveLength(1);
+      expect(transport.spans[0].attributes?.['http.status_code']).toBe(201);
+    });
+
+    it('should record duration_ms in span attributes', async () => {
+      const { instrumentRequest, finishRequest } = await import('../src/server/request-handler');
+
+      const request = {
+        headers: new Headers(),
+        method: 'GET',
+        url: 'http://localhost:3000/api/slow',
+      };
+
+      const result = instrumentRequest(request);
+      finishRequest(result!.spanId, 200, result!.scope, result!.startTime);
+
+      expect(transport.spans).toHaveLength(1);
+      expect(typeof transport.spans[0].attributes?.['duration_ms']).toBe('number');
+    });
+
+    it('should attach breadcrumb events to span', async () => {
+      const { instrumentRequest, finishRequest } = await import('../src/server/request-handler');
+
+      const request = {
+        headers: new Headers(),
+        method: 'GET',
+        url: 'http://localhost:3000/api/events',
+      };
+
+      const result = instrumentRequest(request);
+      finishRequest(result!.spanId, 200, result!.scope, result!.startTime);
+
+      expect(transport.spans).toHaveLength(1);
+      // Should have at least the request + response breadcrumb events
+      expect(transport.spans[0].events).toBeDefined();
+      expect(transport.spans[0].events!.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should include http.route when route is provided', async () => {
+      const { instrumentRequest, finishRequest } = await import('../src/server/request-handler');
+
+      const request = {
+        headers: new Headers(),
+        method: 'GET',
+        url: 'http://localhost:3000/api/users/123',
+      };
+
+      const result = instrumentRequest(request);
+      finishRequest(result!.spanId, 200, result!.scope, result!.startTime, '/api/users/:id');
+
+      expect(transport.spans).toHaveLength(1);
+      expect(transport.spans[0].attributes?.['http.route']).toBe('/api/users/:id');
     });
   });
 

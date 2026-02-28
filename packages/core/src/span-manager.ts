@@ -42,7 +42,7 @@ export class SpanManager {
         Object.assign(span.attributes, options.extraAttributes);
       }
       if (options.events && options.events.length > 0) {
-        span.events = options.events;
+        span.events = (span.events ?? []).concat(options.events);
       }
     }
 

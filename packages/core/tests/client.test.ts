@@ -125,6 +125,24 @@ describe('LogtideClient', () => {
     expect(finished.events![0].timestamp).toBe(1234567890);
   });
 
+  it('should start and finish child spans', () => {
+    const scope = client.createScope('parent-trace');
+    scope.spanId = 'parent-span';
+
+    const child = client.startChildSpan('child-span', scope, { 'db.system': 'postgresql' });
+
+    expect(child.name).toBe('child-span');
+    expect(child.traceId).toBe('parent-trace');
+    expect(child.parentSpanId).toBe('parent-span');
+    expect(child.attributes['db.system']).toBe('postgresql');
+
+    client.finishChildSpan(child.spanId, 'ok');
+
+    expect(transport.spans).toHaveLength(1);
+    expect(transport.spans[0].spanId).toBe(child.spanId);
+    expect(transport.spans[0].status).toBe('ok');
+  });
+
   it('should create a scope with traceId', () => {
     const scope = client.createScope('my-trace');
     expect(scope.traceId).toBe('my-trace');

@@ -156,6 +156,70 @@ describe('@logtide/sveltekit', () => {
       expect(locals.__logtideScope).toBeDefined();
       expect(locals.__logtideSpanId).toBeDefined();
     });
+
+    it('should record http.status_code and duration_ms in span attributes', async () => {
+      const handle = logtideHandle({
+        dsn: 'https://lp_key@api.logtide.dev/proj',
+        service: 'sveltekit-test',
+        transport,
+      });
+
+      const event = {
+        request: new Request('http://localhost/api/data'),
+        url: new URL('http://localhost/api/data'),
+        locals: {} as Record<string, unknown>,
+      };
+
+      const resolve = vi.fn().mockResolvedValue(new Response('ok', { status: 200 }));
+      await handle({ event, resolve });
+
+      expect(transport.spans).toHaveLength(1);
+      expect(transport.spans[0].attributes?.['http.status_code']).toBe(200);
+      expect(typeof transport.spans[0].attributes?.['duration_ms']).toBe('number');
+    });
+
+    it('should capture user-agent in span attributes when provided', async () => {
+      const handle = logtideHandle({
+        dsn: 'https://lp_key@api.logtide.dev/proj',
+        service: 'sveltekit-test',
+        transport,
+      });
+
+      const event = {
+        request: new Request('http://localhost/api/ua', {
+          headers: { 'user-agent': 'SvelteAgent/2.0' },
+        }),
+        url: new URL('http://localhost/api/ua'),
+        locals: {} as Record<string, unknown>,
+      };
+
+      const resolve = vi.fn().mockResolvedValue(new Response('ok'));
+      await handle({ event, resolve });
+
+      expect(transport.spans).toHaveLength(1);
+      expect(transport.spans[0].attributes?.['http.user_agent']).toBe('SvelteAgent/2.0');
+    });
+
+    it('should attach breadcrumb events to span', async () => {
+      const handle = logtideHandle({
+        dsn: 'https://lp_key@api.logtide.dev/proj',
+        service: 'sveltekit-test',
+        transport,
+      });
+
+      const event = {
+        request: new Request('http://localhost/api/events'),
+        url: new URL('http://localhost/api/events'),
+        locals: {} as Record<string, unknown>,
+      };
+
+      const resolve = vi.fn().mockResolvedValue(new Response('ok'));
+      await handle({ event, resolve });
+
+      expect(transport.spans).toHaveLength(1);
+      expect(transport.spans[0].events).toBeDefined();
+      expect(transport.spans[0].events!.length).toBeGreaterThanOrEqual(2);
+    });
   });
 
   describe('logtideHandleError', () => {
@@ -177,6 +241,26 @@ describe('@logtide/sveltekit', () => {
 
       expect(transport.logs).toHaveLength(1);
       expect(transport.logs[0].level).toBe('error');
+    });
+
+    it('should use http.status_code (not http.status) in error metadata', () => {
+      logtideHandle({
+        dsn: 'https://lp_key@api.logtide.dev/proj',
+        service: 'sveltekit-test',
+        transport,
+      });
+
+      const handleError = logtideHandleError();
+
+      handleError({
+        error: new Error('not found'),
+        status: 404,
+        message: 'Not Found',
+      });
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.['http.status_code']).toBe(404);
+      expect(transport.logs[0].metadata?.['http.status']).toBeUndefined();
     });
   });
 

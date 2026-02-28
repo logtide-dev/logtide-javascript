@@ -12,6 +12,21 @@ import { createMiddleware } from 'hono/factory';
 
 export interface LogtideHonoOptions extends ClientOptions {}
 
+function breadcrumbsToEvents(scope: Scope): SpanEvent[] {
+  return scope.getBreadcrumbs().map((b) => ({
+    name: b.message,
+    timestamp: b.timestamp,
+    attributes: {
+      'breadcrumb.type': b.type,
+      ...(b.category ? { 'breadcrumb.category': b.category } : {}),
+      ...(b.level ? { 'breadcrumb.level': b.level } : {}),
+      ...Object.fromEntries(
+        Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
+      ),
+    },
+  }));
+}
+
 /**
  * Hono middleware for LogTide — auto request tracing, error capture, breadcrumbs.
  *
@@ -129,18 +144,7 @@ export function logtide(options: LogtideHonoOptions) {
       });
 
       // Convert breadcrumbs to SpanEvents
-      const events: SpanEvent[] = scope.getBreadcrumbs().map((b) => ({
-        name: b.message,
-        timestamp: b.timestamp,
-        attributes: {
-          'breadcrumb.type': b.type,
-          ...(b.category ? { 'breadcrumb.category': b.category } : {}),
-          ...(b.level ? { 'breadcrumb.level': b.level } : {}),
-          ...Object.fromEntries(
-            Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
-          ),
-        },
-      }));
+      const events: SpanEvent[] = breadcrumbsToEvents(scope);
 
       // Build extra attributes
       const route = typeof (c.req as any).routePath === 'string' && (c.req as any).routePath !== ''
@@ -165,7 +169,7 @@ export function logtide(options: LogtideHonoOptions) {
           'http.method': method,
           'http.url': c.req.url,
           'http.target': pathname,
-          'http.status_code': String(status),
+          'http.status_code': status,
           duration_ms: durationMs,
         }, scope);
       }
@@ -186,18 +190,7 @@ export function logtide(options: LogtideHonoOptions) {
       });
 
       // Convert breadcrumbs to SpanEvents
-      const events: SpanEvent[] = scope.getBreadcrumbs().map((b) => ({
-        name: b.message,
-        timestamp: b.timestamp,
-        attributes: {
-          'breadcrumb.type': b.type,
-          ...(b.category ? { 'breadcrumb.category': b.category } : {}),
-          ...(b.level ? { 'breadcrumb.level': b.level } : {}),
-          ...Object.fromEntries(
-            Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
-          ),
-        },
-      }));
+      const events: SpanEvent[] = breadcrumbsToEvents(scope);
 
       client.finishSpan(span.spanId, 'error', {
         extraAttributes: {

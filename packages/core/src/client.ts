@@ -205,6 +205,29 @@ export class LogtideClient implements IClient {
     }
   }
 
+  /**
+   * Start a child span under the given scope.
+   */
+  startChildSpan(name: string, scope: Scope, attributes?: SpanAttributes): Span {
+    return this.startSpan({
+      name,
+      traceId: scope.traceId,
+      parentSpanId: scope.spanId,
+      attributes,
+    });
+  }
+
+  /**
+   * Finish a child span by ID.
+   */
+  finishChildSpan(
+    spanId: string,
+    status: 'ok' | 'error' = 'ok',
+    options?: { extraAttributes?: SpanAttributes; events?: SpanEvent[] },
+  ): void {
+    this.finishSpan(spanId, status, options);
+  }
+
   // ─── Integrations ─────────────────────────────────────
 
   addIntegration(integration: Integration): void {

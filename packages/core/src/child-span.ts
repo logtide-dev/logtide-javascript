@@ -18,7 +18,7 @@ export function startChildSpan(name: string, scope: Scope, attributes?: SpanAttr
       attributes: attributes ?? {},
     };
   }
-  return client.startSpan({ name, traceId: scope.traceId, parentSpanId: scope.spanId, attributes });
+  return client.startChildSpan(name, scope, attributes);
 }
 
 /**
@@ -29,5 +29,5 @@ export function finishChildSpan(
   status: 'ok' | 'error' = 'ok',
   options?: { extraAttributes?: SpanAttributes; events?: SpanEvent[] },
 ): void {
-  hub.getClient()?.finishSpan(spanId, status, options);
+  hub.getClient()?.finishChildSpan(spanId, status, options);
 }
