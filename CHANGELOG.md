@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-28
+
+### Added
+- **OTLP Span Events**: Breadcrumbs are now automatically converted to OTLP Span Events, providing a detailed timeline of events within the trace viewer.
+- **Child Spans API**: New `startChildSpan()` and `finishChildSpan()` APIs in `@logtide/core` to create hierarchical spans for operations like DB queries or external API calls.
+- **Rich Span Attributes**: Added standardized attributes to request spans across all frameworks:
+  - `http.user_agent`, `net.peer.ip`, `http.query_string` (at start)
+  - `http.status_code`, `duration_ms`, `http.route` (at finish)
+- **Express Error Handler**: Exported `logtideErrorHandler` to capture unhandled errors and associate them with the current request scope.
+
+### Changed
+- **Enriched Breadcrumbs**: Request/Response breadcrumbs now include more metadata (`method`, `url`, `status`, `duration_ms`) by default.
+- **Improved Nuxt Tracing**: Nitro plugin now accurately captures response status codes and durations.
+- **Improved Angular Tracing**: `LogtideHttpInterceptor` now captures status codes for both successful and failed outgoing requests.
+
+### Fixed
+- Fixed a bug in Nuxt Nitro plugin where spans were always marked as 'ok' regardless of the actual response status.
+
 ## [0.5.6] - 2026-02-08
 
 ### Changed

@@ -1,4 +1,4 @@
-import type { Span, SpanAttributes, SpanStatus } from '@logtide/types';
+import type { Span, SpanAttributes, SpanEvent, SpanStatus } from '@logtide/types';
 import { generateSpanId, generateTraceId } from './utils/trace-id';
 
 export interface StartSpanOptions {
@@ -26,12 +26,26 @@ export class SpanManager {
     return span;
   }
 
-  finishSpan(spanId: string, status: SpanStatus = 'ok'): Span | undefined {
+  finishSpan(
+    spanId: string,
+    status: SpanStatus = 'ok',
+    options?: { extraAttributes?: SpanAttributes; events?: SpanEvent[] },
+  ): Span | undefined {
     const span = this.activeSpans.get(spanId);
     if (!span) return undefined;
 
     span.endTime = Date.now();
     span.status = status;
+
+    if (options) {
+      if (options.extraAttributes) {
+        Object.assign(span.attributes, options.extraAttributes);
+      }
+      if (options.events && options.events.length > 0) {
+        span.events = (span.events ?? []).concat(options.events);
+      }
+    }
+
     this.activeSpans.delete(spanId);
     return span;
   }

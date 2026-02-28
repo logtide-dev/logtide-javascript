@@ -6,6 +6,8 @@ import type {
   Integration,
   LogLevel,
   Span,
+  SpanAttributes,
+  SpanEvent,
   Transport,
 } from '@logtide/types';
 import { resolveDSN } from './dsn';
@@ -41,7 +43,10 @@ class DefaultTransport implements Transport {
     });
 
     this.spanTransport = new BatchTransport({
-      inner: new OtlpHttpTransport(dsn, options.service || 'unknown'),
+      inner: new OtlpHttpTransport(dsn, options.service || 'unknown', {
+        environment: options.environment,
+        release: options.release,
+      }),
       batchSize: options.batchSize,
       flushInterval: options.flushInterval,
       maxBufferSize: options.maxBufferSize,
@@ -189,11 +194,38 @@ export class LogtideClient implements IClient {
     return this.spanManager.startSpan(options);
   }
 
-  finishSpan(spanId: string, status: 'ok' | 'error' = 'ok'): void {
-    const span = this.spanManager.finishSpan(spanId, status);
+  finishSpan(
+    spanId: string,
+    status: 'ok' | 'error' = 'ok',
+    options?: { extraAttributes?: SpanAttributes; events?: SpanEvent[] },
+  ): void {
+    const span = this.spanManager.finishSpan(spanId, status, options);
     if (span && this.transport.sendSpans) {
       this.transport.sendSpans([span]);
     }
+  }
+
+  /**
+   * Start a child span under the given scope.
+   */
+  startChildSpan(name: string, scope: Scope, attributes?: SpanAttributes): Span {
+    return this.startSpan({
+      name,
+      traceId: scope.traceId,
+      parentSpanId: scope.spanId,
+      attributes,
+    });
+  }
+
+  /**
+   * Finish a child span by ID.
+   */
+  finishChildSpan(
+    spanId: string,
+    status: 'ok' | 'error' = 'ok',
+    options?: { extraAttributes?: SpanAttributes; events?: SpanEvent[] },
+  ): void {
+    this.finishSpan(spanId, status, options);
   }
 
   // ─── Integrations ─────────────────────────────────────

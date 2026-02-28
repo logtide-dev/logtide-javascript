@@ -1,12 +1,14 @@
 import type { ClientOptions } from '@logtide/types';
 import {
   hub,
+  Scope,
   ConsoleIntegration,
   GlobalErrorIntegration,
   generateTraceId,
   parseTraceparent,
   createTraceparent,
 } from '@logtide/core';
+import type { SpanEvent } from '@logtide/core';
 
 interface HandleInput {
   event: {
@@ -33,6 +35,21 @@ interface HandleFetchInput {
   };
   request: Request;
   fetch: typeof globalThis.fetch;
+}
+
+function breadcrumbsToEvents(scope: Scope): SpanEvent[] {
+  return scope.getBreadcrumbs().map((b) => ({
+    name: b.message,
+    timestamp: b.timestamp,
+    attributes: {
+      'breadcrumb.type': b.type,
+      ...(b.category ? { 'breadcrumb.category': b.category } : {}),
+      ...(b.level ? { 'breadcrumb.level': b.level } : {}),
+      ...Object.fromEntries(
+        Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
+      ),
+    },
+  }));
 }
 
 /**
@@ -82,6 +99,13 @@ export function logtideHandle(options: ClientOptions) {
     const method = event.request.method;
     const pathname = event.url.pathname;
 
+    // Capture extra request metadata
+    const userAgent = event.request.headers.get('user-agent');
+    const forwardedFor = event.request.headers.get('x-forwarded-for');
+    const queryString = event.url.search;
+
+    const startTime = Date.now();
+
     const span = client.startSpan({
       name: `${method} ${pathname}`,
       traceId,
@@ -90,6 +114,9 @@ export function logtideHandle(options: ClientOptions) {
         'http.method': method,
         'http.url': event.url.href,
         'http.target': pathname,
+        ...(userAgent ? { 'http.user_agent': userAgent } : {}),
+        ...(forwardedFor ? { 'net.peer.ip': forwardedFor } : {}),
+        ...(queryString ? { 'http.query_string': queryString } : {}),
       },
     });
 
@@ -104,19 +131,55 @@ export function logtideHandle(options: ClientOptions) {
       category: 'request',
       message: `${method} ${pathname}`,
       timestamp: Date.now(),
+      data: { method, url: event.url.href, ...(userAgent ? { userAgent } : {}) },
     });
 
     try {
       const response = await resolve(event);
 
-      client.finishSpan(span.spanId, response.status >= 500 ? 'error' : 'ok');
+      const durationMs = Date.now() - startTime;
+
+      scope.addBreadcrumb({
+        type: 'http',
+        category: 'response',
+        message: `${response.status} request`,
+        level: response.status >= 500 ? 'error' : response.status >= 400 ? 'warn' : 'info',
+        timestamp: Date.now(),
+        data: { status: response.status, duration_ms: durationMs },
+      });
+
+      client.finishSpan(span.spanId, response.status >= 500 ? 'error' : 'ok', {
+        extraAttributes: {
+          'http.status_code': response.status,
+          'duration_ms': durationMs,
+        },
+        events: breadcrumbsToEvents(scope),
+      });
 
       // Inject traceparent into response
       const newResponse = new Response(response.body, response);
       newResponse.headers.set('traceparent', createTraceparent(traceId, span.spanId, true));
       return newResponse;
     } catch (error) {
-      client.finishSpan(span.spanId, 'error');
+      const durationMs = Date.now() - startTime;
+
+      scope.addBreadcrumb({
+        type: 'http',
+        category: 'response',
+        message: `500 request`,
+        level: 'error',
+        timestamp: Date.now(),
+        data: { status: 500, duration_ms: durationMs },
+      });
+
+      client.finishSpan(span.spanId, 'error', {
+        extraAttributes: {
+          'http.status_code': 500,
+          'duration_ms': durationMs,
+        },
+        events: breadcrumbsToEvents(scope),
+      });
+
       client.captureError(error, {}, scope);
       throw error;
     }
@@ -136,7 +199,7 @@ export function logtideHandleError() {
       : undefined;
 
     client.captureError(error, {
-      'http.status': status,
+      'http.status_code': status,
       'error.message': message,
       'http.url': event?.url?.href,
     }, scope);

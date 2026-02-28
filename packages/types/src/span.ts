@@ -4,6 +4,12 @@ export interface SpanAttributes {
   [key: string]: string | number | boolean | undefined;
 }
 
+export interface SpanEvent {
+  name: string;
+  timestamp: number;
+  attributes?: SpanAttributes;
+}
+
 export interface Span {
   traceId: string;
   spanId: string;
@@ -13,4 +19,5 @@ export interface Span {
   startTime: number;
   endTime?: number;
   attributes: SpanAttributes;
+  events?: SpanEvent[];
 }

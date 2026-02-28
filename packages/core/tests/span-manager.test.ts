@@ -77,4 +77,53 @@ describe('SpanManager', () => {
 
     expect(finished!.status).toBe('ok');
   });
+
+  it('should merge extraAttributes when provided via options', () => {
+    const span = sm.startSpan({
+      name: 'attr-span',
+      attributes: { 'http.method': 'GET' },
+    });
+    const finished = sm.finishSpan(span.spanId, 'ok', {
+      extraAttributes: { 'http.status_code': 200, 'custom.key': 'value' },
+    });
+
+    expect(finished).toBeDefined();
+    expect(finished!.attributes['http.method']).toBe('GET');
+    expect(finished!.attributes['http.status_code']).toBe(200);
+    expect(finished!.attributes['custom.key']).toBe('value');
+  });
+
+  it('should set span events when provided via options', () => {
+    const span = sm.startSpan({ name: 'events-span' });
+    const events = [
+      { name: 'breadcrumb', timestamp: 1000, attributes: { type: 'http', message: 'GET /api' } },
+      { name: 'breadcrumb', timestamp: 2000, attributes: { type: 'console', message: 'log entry' } },
+    ];
+    const finished = sm.finishSpan(span.spanId, 'ok', { events });
+
+    expect(finished).toBeDefined();
+    expect(finished!.events).toHaveLength(2);
+    expect(finished!.events![0].name).toBe('breadcrumb');
+    expect(finished!.events![0].timestamp).toBe(1000);
+    expect(finished!.events![0].attributes!['type']).toBe('http');
+    expect(finished!.events![1].timestamp).toBe(2000);
+  });
+
+  it('should not set events when events array is empty', () => {
+    const span = sm.startSpan({ name: 'no-events-span' });
+    const finished = sm.finishSpan(span.spanId, 'ok', { events: [] });
+
+    expect(finished).toBeDefined();
+    expect(finished!.events).toBeUndefined();
+  });
+
+  it('should remain backward compatible with no options argument', () => {
+    const span = sm.startSpan({ name: 'compat-span', attributes: { key: 'val' } });
+    const finished = sm.finishSpan(span.spanId, 'ok');
+
+    expect(finished).toBeDefined();
+    expect(finished!.status).toBe('ok');
+    expect(finished!.attributes['key']).toBe('val');
+    expect(finished!.events).toBeUndefined();
+  });
 });
