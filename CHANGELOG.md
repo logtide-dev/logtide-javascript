@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-02-28
+
+### Fixed
+- **Security Updates**: Addressed multiple security vulnerabilities across the workspace:
+  - Updated `minimatch` to `>=10.2.3` (fixes several ReDoS vulnerabilities).
+  - Updated `rollup` to `>=4.59.0` (fixes Arbitrary File Write via Path Traversal).
+  - Updated `tar` to `>=7.5.8` (fixes Hardlink Target Escape).
+  - Updated `nanotar` to `^0.2.1` (fixes Path Traversal).
+  - Updated `@angular/core` to `^19.2.19` (fixes XSS in i18n).
+  - Updated `@sveltejs/kit` to `^2.52.2` and `svelte` to `^5.53.5` (fixes XSS and Resource Exhaustion).
+  - Updated `ajv` to `>=8.18.0` (fixes ReDoS).
+  - Updated `qs` to `>=6.14.2` (fixes DoS).
+  - Updated `hono` to `^4.11.10` (Timing attack hardening).
+  - Updated `devalue` to `>=5.6.3` (fixes Prototype Pollution and Resource Exhaustion).
+
 ## [0.6.0] - 2026-02-28
 
 ### Added
