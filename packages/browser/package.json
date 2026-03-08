@@ -1,7 +1,7 @@
 {
-  "name": "@logtide/nextjs",
+  "name": "@logtide/browser",
   "version": "0.6.1",
-  "description": "LogTide SDK integration for Next.js — auto error capture, request tracing, and performance spans",
+  "description": "Logtide browser SDK — Web Vitals, breadcrumbs, session context, offline resilience",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -15,26 +15,6 @@
       "require": {
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
-      }
-    },
-    "./server": {
-      "import": {
-        "types": "./dist/server/index.d.ts",
-        "default": "./dist/server/index.js"
-      },
-      "require": {
-        "types": "./dist/server/index.d.cts",
-        "default": "./dist/server/index.cjs"
-      }
-    },
-    "./client": {
-      "import": {
-        "types": "./dist/client/index.d.ts",
-        "default": "./dist/client/index.js"
-      },
-      "require": {
-        "types": "./dist/client/index.d.cts",
-        "default": "./dist/client/index.cjs"
       }
     }
   },
@@ -50,7 +30,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/logtide-dev/logtide-javascript.git",
-    "directory": "packages/nextjs"
+    "directory": "packages/browser"
   },
   "homepage": "https://github.com/logtide-dev/logtide-javascript#readme",
   "bugs": {
@@ -62,19 +42,20 @@
     "access": "public"
   },
   "dependencies": {
-    "@logtide/browser": "workspace:*",
     "@logtide/core": "workspace:*",
     "@logtide/types": "workspace:*"
   },
   "peerDependencies": {
-    "next": ">=14.0.0",
-    "react": ">=18.0.0"
+    "web-vitals": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "web-vitals": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@types/react": "^18.3.0",
-    "next": "^15.0.0",
-    "react": "^18.3.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "web-vitals": "^4.2.4"
   }
 }

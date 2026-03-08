@@ -42,6 +42,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@logtide/browser": "workspace:*",
     "@logtide/core": "workspace:*",
     "@logtide/types": "workspace:*"
   },

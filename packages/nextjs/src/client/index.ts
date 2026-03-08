@@ -1,5 +1,6 @@
 import type { ClientOptions } from '@logtide/types';
 import { hub, GlobalErrorIntegration } from '@logtide/core';
+import { getSessionId } from '@logtide/browser';
 
 export { LogtideErrorBoundary } from './error-boundary';
 export { trackNavigation } from './navigation';
@@ -24,4 +25,6 @@ export function initLogtide(options: ClientOptions): void {
       ...(options.integrations ?? []),
     ],
   });
+
+  hub.getScope().setSessionId(getSessionId());
 }

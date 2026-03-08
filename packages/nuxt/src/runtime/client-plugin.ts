@@ -1,4 +1,5 @@
 import { hub, GlobalErrorIntegration } from '@logtide/core';
+import { getSessionId } from '@logtide/browser';
 import { defineNuxtPlugin, useRuntimeConfig } from '#app';
 
 /**
@@ -23,6 +24,8 @@ export default defineNuxtPlugin((nuxtApp) => {
     debug: config.debug,
     integrations: [new GlobalErrorIntegration()],
   });
+
+  hub.getScope().setSessionId(getSessionId());
 
   // Capture Vue errors
   nuxtApp.vueApp.config.errorHandler = (error, instance, info) => {

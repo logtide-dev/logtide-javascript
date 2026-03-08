@@ -8,6 +8,7 @@ import {
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import type { ClientOptions } from '@logtide/types';
 import { hub, GlobalErrorIntegration } from '@logtide/core';
+import { getSessionId } from '@logtide/browser';
 import { LogtideErrorHandler } from './error-handler';
 import { LogtideHttpInterceptor } from './http-interceptor';
 
@@ -40,6 +41,7 @@ export function provideLogtide(options: ClientOptions): EnvironmentProviders {
               ...(options.integrations ?? []),
             ],
           });
+          hub.getScope().setSessionId(getSessionId());
         };
       },
       multi: true,
@@ -80,6 +82,7 @@ export function getLogtideProviders(options: ClientOptions): Provider[] {
               ...(options.integrations ?? []),
             ],
           });
+          hub.getScope().setSessionId(getSessionId());
         };
       },
       multi: true,

@@ -145,6 +145,7 @@ export class LogtideClient implements IClient {
       },
       trace_id: scope?.traceId,
       span_id: scope?.spanId,
+      session_id: scope?.sessionId,
       breadcrumbs: scope?.getBreadcrumbs() ?? this.globalBreadcrumbs.getAll(),
     };
 
