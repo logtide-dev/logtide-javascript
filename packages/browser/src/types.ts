@@ -1,3 +1,11 @@
+import type { ClientOptions } from '@logtide/types';
+
+/** ClientOptions extended with browser-specific settings */
+export interface BrowserClientOptions extends ClientOptions {
+  /** Browser-specific options */
+  browser?: BrowserOptions;
+}
+
 export interface BrowserOptions {
   /** Enable session context (default: true) */
   sessionTracking?: boolean;

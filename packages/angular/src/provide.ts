@@ -6,11 +6,23 @@ import {
   APP_INITIALIZER,
 } from '@angular/core';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import type { ClientOptions } from '@logtide/types';
+import type { Integration } from '@logtide/types';
 import { hub, GlobalErrorIntegration } from '@logtide/core';
-import { getSessionId } from '@logtide/browser';
+import { getSessionId, WebVitalsIntegration, type BrowserClientOptions } from '@logtide/browser';
 import { LogtideErrorHandler } from './error-handler';
 import { LogtideHttpInterceptor } from './http-interceptor';
+
+function buildBrowserIntegrations(options: BrowserClientOptions): Integration[] {
+  const integrations: Integration[] = [];
+  if (options.browser?.webVitals) {
+    integrations.push(
+      new WebVitalsIntegration({
+        sampleRate: options.browser.webVitalsSampleRate,
+      }),
+    );
+  }
+  return integrations;
+}
 
 /**
  * Provide LogTide in a standalone Angular app (Angular 17+).
@@ -27,7 +39,7 @@ import { LogtideHttpInterceptor } from './http-interceptor';
  * };
  * ```
  */
-export function provideLogtide(options: ClientOptions): EnvironmentProviders {
+export function provideLogtide(options: BrowserClientOptions): EnvironmentProviders {
   return makeEnvironmentProviders([
     {
       provide: APP_INITIALIZER,
@@ -38,6 +50,7 @@ export function provideLogtide(options: ClientOptions): EnvironmentProviders {
             ...options,
             integrations: [
               new GlobalErrorIntegration(),
+              ...buildBrowserIntegrations(options),
               ...(options.integrations ?? []),
             ],
           });
@@ -68,7 +81,7 @@ export function provideLogtide(options: ClientOptions): EnvironmentProviders {
  * export class AppModule {}
  * ```
  */
-export function getLogtideProviders(options: ClientOptions): Provider[] {
+export function getLogtideProviders(options: BrowserClientOptions): Provider[] {
   return [
     {
       provide: APP_INITIALIZER,
@@ -79,6 +92,7 @@ export function getLogtideProviders(options: ClientOptions): Provider[] {
             ...options,
             integrations: [
               new GlobalErrorIntegration(),
+              ...buildBrowserIntegrations(options),
               ...(options.integrations ?? []),
             ],
           });

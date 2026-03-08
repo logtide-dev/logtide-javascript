@@ -1,5 +1,6 @@
+import type { Integration } from '@logtide/types';
 import { hub, GlobalErrorIntegration } from '@logtide/core';
-import { getSessionId } from '@logtide/browser';
+import { getSessionId, WebVitalsIntegration } from '@logtide/browser';
 import { defineNuxtPlugin, useRuntimeConfig } from '#app';
 
 /**
@@ -12,9 +13,23 @@ export default defineNuxtPlugin((nuxtApp) => {
     environment?: string;
     release?: string;
     debug?: boolean;
+    browser?: {
+      webVitals?: boolean;
+      webVitalsSampleRate?: number;
+    };
   };
 
   if (!config?.dsn) return;
+
+  const browserIntegrations: Integration[] = [];
+
+  if (config.browser?.webVitals) {
+    browserIntegrations.push(
+      new WebVitalsIntegration({
+        sampleRate: config.browser.webVitalsSampleRate,
+      }),
+    );
+  }
 
   hub.init({
     dsn: config.dsn,
@@ -22,7 +37,10 @@ export default defineNuxtPlugin((nuxtApp) => {
     environment: config.environment,
     release: config.release,
     debug: config.debug,
-    integrations: [new GlobalErrorIntegration()],
+    integrations: [
+      new GlobalErrorIntegration(),
+      ...browserIntegrations,
+    ],
   });
 
   hub.getScope().setSessionId(getSessionId());
