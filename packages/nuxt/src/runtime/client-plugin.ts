@@ -1,6 +1,12 @@
 import type { Integration } from '@logtide/types';
-import { hub, GlobalErrorIntegration } from '@logtide/core';
-import { getSessionId, WebVitalsIntegration } from '@logtide/browser';
+import { hub, GlobalErrorIntegration, resolveDSN } from '@logtide/core';
+import {
+  getSessionId,
+  WebVitalsIntegration,
+  ClickBreadcrumbIntegration,
+  NetworkBreadcrumbIntegration,
+} from '@logtide/browser';
+import type { ClickBreadcrumbOptions, NetworkBreadcrumbOptions } from '@logtide/browser';
 import { defineNuxtPlugin, useRuntimeConfig } from '#app';
 
 /**
@@ -16,18 +22,38 @@ export default defineNuxtPlugin((nuxtApp) => {
     browser?: {
       webVitals?: boolean;
       webVitalsSampleRate?: number;
+      clickBreadcrumbs?: boolean | ClickBreadcrumbOptions;
+      networkBreadcrumbs?: boolean | NetworkBreadcrumbOptions;
     };
   };
 
   if (!config?.dsn) return;
 
+  const browserOpts = config.browser ?? {};
   const browserIntegrations: Integration[] = [];
+  const apiUrl = resolveDSN({ dsn: config.dsn }).apiUrl;
 
-  if (config.browser?.webVitals) {
+  if (browserOpts.webVitals) {
     browserIntegrations.push(
       new WebVitalsIntegration({
-        sampleRate: config.browser.webVitalsSampleRate,
+        sampleRate: browserOpts.webVitalsSampleRate,
       }),
+    );
+  }
+
+  if (browserOpts.clickBreadcrumbs !== false) {
+    const clickOpts = typeof browserOpts.clickBreadcrumbs === 'object'
+      ? browserOpts.clickBreadcrumbs
+      : undefined;
+    browserIntegrations.push(new ClickBreadcrumbIntegration(clickOpts));
+  }
+
+  if (browserOpts.networkBreadcrumbs !== false) {
+    const netOpts = typeof browserOpts.networkBreadcrumbs === 'object'
+      ? browserOpts.networkBreadcrumbs
+      : {};
+    browserIntegrations.push(
+      new NetworkBreadcrumbIntegration({ ...netOpts, apiUrl }),
     );
   }
 

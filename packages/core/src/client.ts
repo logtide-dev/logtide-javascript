@@ -132,6 +132,12 @@ export class LogtideClient implements IClient {
     metadata?: Record<string, unknown>,
     scope?: Scope,
   ): void {
+    // Merge scope breadcrumbs with client-level breadcrumbs (from integrations).
+    // Integrations call client.addBreadcrumb() directly, which writes to globalBreadcrumbs.
+    // Hub calls also write to the scope. Deduplicate by using the larger set,
+    // which is always globalBreadcrumbs since it receives from both paths.
+    const breadcrumbs = this.globalBreadcrumbs.getAll();
+
     const entry: InternalLogEntry = {
       service: this.resolveService(scope),
       level: level as LogLevel,
@@ -142,11 +148,11 @@ export class LogtideClient implements IClient {
         ...(this.options.environment ? { environment: this.options.environment } : {}),
         ...(this.options.release ? { release: this.options.release } : {}),
         ...(scope ? { tags: scope.tags, ...scope.extras } : {}),
+        ...(breadcrumbs.length > 0 ? { breadcrumbs } : {}),
       },
       trace_id: scope?.traceId,
       span_id: scope?.spanId,
       session_id: scope?.sessionId,
-      breadcrumbs: scope?.getBreadcrumbs() ?? this.globalBreadcrumbs.getAll(),
     };
 
     this.transport.sendLogs([entry]);

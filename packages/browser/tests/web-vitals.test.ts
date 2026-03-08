@@ -36,8 +36,6 @@ describe('WebVitalsIntegration', () => {
 
   it('calls captureLog when web-vitals metrics fire', async () => {
     const client = createMockClient();
-    vi.stubGlobal('window', {});
-
     const integration = new WebVitalsIntegration();
     integration.setup(client);
 
@@ -99,7 +97,8 @@ describe('WebVitalsIntegration', () => {
 
   it('skips in non-browser environment (no window)', async () => {
     const client = createMockClient();
-    // window is undefined in node by default
+    // Temporarily remove window to simulate non-browser
+    vi.stubGlobal('window', undefined);
 
     const integration = new WebVitalsIntegration();
     integration.setup(client);
@@ -111,7 +110,6 @@ describe('WebVitalsIntegration', () => {
 
   it('defaults sampleRate to 1.0', async () => {
     const client = createMockClient();
-    vi.stubGlobal('window', {});
 
     const integration = new WebVitalsIntegration();
     integration.setup(client);

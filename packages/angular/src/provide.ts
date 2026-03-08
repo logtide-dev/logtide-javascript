@@ -7,20 +7,46 @@ import {
 } from '@angular/core';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import type { Integration } from '@logtide/types';
-import { hub, GlobalErrorIntegration } from '@logtide/core';
-import { getSessionId, WebVitalsIntegration, type BrowserClientOptions } from '@logtide/browser';
+import { hub, GlobalErrorIntegration, resolveDSN } from '@logtide/core';
+import {
+  getSessionId,
+  WebVitalsIntegration,
+  ClickBreadcrumbIntegration,
+  NetworkBreadcrumbIntegration,
+  type BrowserClientOptions,
+} from '@logtide/browser';
 import { LogtideErrorHandler } from './error-handler';
 import { LogtideHttpInterceptor } from './http-interceptor';
 
 function buildBrowserIntegrations(options: BrowserClientOptions): Integration[] {
+  const browserOpts = options.browser ?? {};
   const integrations: Integration[] = [];
-  if (options.browser?.webVitals) {
+  const apiUrl = resolveDSN(options).apiUrl;
+
+  if (browserOpts.webVitals) {
     integrations.push(
       new WebVitalsIntegration({
-        sampleRate: options.browser.webVitalsSampleRate,
+        sampleRate: browserOpts.webVitalsSampleRate,
       }),
     );
   }
+
+  if (browserOpts.clickBreadcrumbs !== false) {
+    const clickOpts = typeof browserOpts.clickBreadcrumbs === 'object'
+      ? browserOpts.clickBreadcrumbs
+      : undefined;
+    integrations.push(new ClickBreadcrumbIntegration(clickOpts));
+  }
+
+  if (browserOpts.networkBreadcrumbs !== false) {
+    const netOpts = typeof browserOpts.networkBreadcrumbs === 'object'
+      ? browserOpts.networkBreadcrumbs
+      : {};
+    integrations.push(
+      new NetworkBreadcrumbIntegration({ ...netOpts, apiUrl }),
+    );
+  }
+
   return integrations;
 }
 

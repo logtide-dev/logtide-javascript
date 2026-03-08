@@ -9,7 +9,6 @@ export interface LogEntry {
   trace_id?: string;
   span_id?: string;
   session_id?: string;
-  breadcrumbs?: import('./breadcrumb').Breadcrumb[];
 }
 
 export interface InternalLogEntry extends LogEntry {
