@@ -88,11 +88,16 @@ export class LogtideClient implements IClient {
     this.options = options;
     this.globalBreadcrumbs = new BreadcrumbBuffer(options.maxBreadcrumbs ?? 100);
 
+    let transport: Transport & { destroy?: () => void };
     if (options.transport) {
-      this.transport = options.transport;
+      transport = options.transport;
     } else {
-      this.transport = new DefaultTransport(options);
+      transport = new DefaultTransport(options);
     }
+    if (options.transportWrapper) {
+      transport = options.transportWrapper(transport) as Transport & { destroy?: () => void };
+    }
+    this.transport = transport;
 
     // Install integrations
     if (options.integrations) {

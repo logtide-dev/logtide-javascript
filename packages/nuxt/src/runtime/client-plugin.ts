@@ -1,10 +1,11 @@
-import type { Integration } from '@logtide/types';
+import type { Integration, Transport } from '@logtide/types';
 import { hub, GlobalErrorIntegration, resolveDSN } from '@logtide/core';
 import {
   getSessionId,
   WebVitalsIntegration,
   ClickBreadcrumbIntegration,
   NetworkBreadcrumbIntegration,
+  OfflineTransport,
 } from '@logtide/browser';
 import type { ClickBreadcrumbOptions, NetworkBreadcrumbOptions } from '@logtide/browser';
 import { defineNuxtPlugin, useRuntimeConfig } from '#app';
@@ -57,12 +58,23 @@ export default defineNuxtPlugin((nuxtApp) => {
     );
   }
 
+  const offlineResilience = (browserOpts as any).offlineResilience !== false;
+  const transportWrapper = offlineResilience
+    ? (inner: Transport) => new OfflineTransport({
+        inner,
+        beaconUrl: `${apiUrl}/api/v1/ingest`,
+        apiKey: resolveDSN({ dsn: config.dsn }).apiKey,
+        debug: config.debug,
+      })
+    : undefined;
+
   hub.init({
     dsn: config.dsn,
     service: config.service ?? 'nuxt',
     environment: config.environment,
     release: config.release,
     debug: config.debug,
+    transportWrapper,
     integrations: [
       new GlobalErrorIntegration(),
       ...browserIntegrations,
