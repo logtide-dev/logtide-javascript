@@ -35,7 +35,7 @@ export async function uploadSourceMap(params: {
   if (!response.ok) {
     let errorMsg: string;
     try {
-      const body = await response.json();
+      const body = await response.json() as Record<string, string>;
       errorMsg = body.error || body.message || `HTTP ${response.status}`;
     } catch {
       errorMsg = `HTTP ${response.status} ${response.statusText}`;
