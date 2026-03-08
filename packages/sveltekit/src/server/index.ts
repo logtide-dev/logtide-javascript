@@ -24,6 +24,8 @@ interface HandleErrorInput {
   event?: {
     request: Request;
     url: URL;
+    route?: { id: string | null };
+    locals?: Record<string, unknown>;
   };
   status?: number;
   message?: string;
@@ -187,7 +189,7 @@ export function logtideHandle(options: ClientOptions) {
 }
 
 /**
- * SvelteKit `handleError` hook — captures unexpected errors.
+ * SvelteKit `handleError` hook — captures unexpected errors with route context.
  */
 export function logtideHandleError() {
   return ({ error, event, status, message }: HandleErrorInput) => {
@@ -198,10 +200,20 @@ export function logtideHandleError() {
       ? (((event as Record<string, unknown>).locals as Record<string, unknown>)?.__logtideScope as ReturnType<typeof client.createScope> | undefined)
       : undefined;
 
+    // Extract route info
+    const routeId = event?.route?.id ?? undefined;
+
+    // Detect if this came from a server load function (scope exists in locals = request context)
+    const hasRequestScope = !!event?.locals?.__logtideScope;
+    const errorContext = hasRequestScope ? 'server' : 'client';
+
     client.captureError(error, {
+      mechanism: 'sveltekit.handleError',
       'http.status_code': status,
       'error.message': message,
       'http.url': event?.url?.href,
+      ...(routeId ? { 'sveltekit.route': routeId } : {}),
+      'sveltekit.context': errorContext,
     }, scope);
   };
 }

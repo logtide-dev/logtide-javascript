@@ -69,6 +69,19 @@ describe('@logtide/angular', () => {
       expect(transport.logs).toHaveLength(1);
       expect(transport.logs[0].message).toBe('string error');
     });
+
+    it('should include angular.zone context in metadata', async () => {
+      const { LogtideErrorHandler } = await import('../src/error-handler');
+      const handler = new LogtideErrorHandler();
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      handler.handleError(new Error('zone error'));
+      consoleSpy.mockRestore();
+
+      expect(transport.logs).toHaveLength(1);
+      // Outside of Angular context, NgZone.isInAngularZone() returns false
+      expect(transport.logs[0].metadata?.['angular.zone']).toBe('outside');
+    });
   });
 
   describe('provideLogtide', () => {

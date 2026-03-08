@@ -17,6 +17,26 @@ import { hub } from '@logtide/core';
  * }
  * ```
  */
+/**
+ * Extract route info from Next.js internals when available.
+ */
+function getNextRouteInfo(): Record<string, unknown> {
+  if (typeof window === 'undefined') return {};
+
+  const data: Record<string, unknown> = {};
+
+  // App Router: __next_f or __NEXT_DATA__
+  const nextData = (window as any).__NEXT_DATA__;
+  if (nextData) {
+    if (nextData.page) data.route = nextData.page;
+    if (nextData.query && Object.keys(nextData.query).length > 0) {
+      data.routeParams = nextData.query;
+    }
+  }
+
+  return data;
+}
+
 export function trackNavigation(): () => void {
   if (typeof window === 'undefined') return () => {};
 
@@ -25,12 +45,13 @@ export function trackNavigation(): () => void {
   const handler = () => {
     const newUrl = window.location.href;
     if (newUrl !== currentUrl) {
+      const routeInfo = getNextRouteInfo();
       hub.addBreadcrumb({
         type: 'navigation',
         category: 'navigation',
         message: `Navigated to ${newUrl}`,
         timestamp: Date.now(),
-        data: { from: currentUrl, to: newUrl },
+        data: { from: currentUrl, to: newUrl, ...routeInfo },
       });
       currentUrl = newUrl;
     }

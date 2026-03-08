@@ -1,3 +1,5 @@
+export { createBoundaryHandler } from './error-boundary';
+
 import type { Integration, Transport } from '@logtide/types';
 import { hub, GlobalErrorIntegration, resolveDSN } from '@logtide/core';
 import {
