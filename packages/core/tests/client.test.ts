@@ -89,8 +89,10 @@ describe('LogtideClient', () => {
     client.addBreadcrumb({ type: 'http', message: 'GET /api', timestamp: 1 });
     client.captureLog('info', 'test');
 
-    expect(transport.logs[0].breadcrumbs).toHaveLength(1);
-    expect(transport.logs[0].breadcrumbs![0].message).toBe('GET /api');
+    const metadata = transport.logs[0].metadata as Record<string, unknown>;
+    const breadcrumbs = metadata.breadcrumbs as Array<{ message: string }>;
+    expect(breadcrumbs).toHaveLength(1);
+    expect(breadcrumbs[0].message).toBe('GET /api');
   });
 
   it('should start and finish spans', () => {
@@ -105,6 +107,42 @@ describe('LogtideClient', () => {
     expect(transport.spans).toHaveLength(1);
     expect(transport.spans[0].status).toBe('ok');
     expect(transport.spans[0].endTime).toBeDefined();
+  });
+
+  it('should finish a span with extraAttributes and events', () => {
+    const span = client.startSpan({ name: 'enriched-span', attributes: { 'http.method': 'POST' } });
+
+    client.finishSpan(span.spanId, 'ok', {
+      extraAttributes: { 'http.status_code': 201 },
+      events: [{ name: 'breadcrumb', timestamp: 1234567890, attributes: { type: 'http' } }],
+    });
+
+    expect(transport.spans).toHaveLength(1);
+    const finished = transport.spans[0];
+    expect(finished.status).toBe('ok');
+    expect(finished.attributes['http.method']).toBe('POST');
+    expect(finished.attributes['http.status_code']).toBe(201);
+    expect(finished.events).toHaveLength(1);
+    expect(finished.events![0].name).toBe('breadcrumb');
+    expect(finished.events![0].timestamp).toBe(1234567890);
+  });
+
+  it('should start and finish child spans', () => {
+    const scope = client.createScope('parent-trace');
+    scope.spanId = 'parent-span';
+
+    const child = client.startChildSpan('child-span', scope, { 'db.system': 'postgresql' });
+
+    expect(child.name).toBe('child-span');
+    expect(child.traceId).toBe('parent-trace');
+    expect(child.parentSpanId).toBe('parent-span');
+    expect(child.attributes['db.system']).toBe('postgresql');
+
+    client.finishChildSpan(child.spanId, 'ok');
+
+    expect(transport.spans).toHaveLength(1);
+    expect(transport.spans[0].spanId).toBe(child.spanId);
+    expect(transport.spans[0].status).toBe('ok');
   });
 
   it('should create a scope with traceId', () => {

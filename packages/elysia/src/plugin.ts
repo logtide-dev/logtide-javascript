@@ -1,5 +1,5 @@
 import type { ClientOptions } from '@logtide/types';
-import type { Scope } from '@logtide/core';
+import type { Scope, SpanEvent } from '@logtide/core';
 import {
   hub,
   ConsoleIntegration,
@@ -11,6 +11,21 @@ import {
 import Elysia from 'elysia';
 
 export interface LogtideElysiaOptions extends ClientOptions {}
+
+function breadcrumbsToEvents(scope: Scope): SpanEvent[] {
+  return scope.getBreadcrumbs().map((b) => ({
+    name: b.message,
+    timestamp: b.timestamp,
+    attributes: {
+      'breadcrumb.type': b.type,
+      ...(b.category ? { 'breadcrumb.category': b.category } : {}),
+      ...(b.level ? { 'breadcrumb.level': b.level } : {}),
+      ...Object.fromEntries(
+        Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
+      ),
+    },
+  }));
+}
 
 /**
  * Elysia plugin for LogTide — request tracing, error capture, breadcrumbs.
@@ -36,7 +51,7 @@ export function logtide(options: LogtideElysiaOptions) {
     ],
   });
 
-  const spanMap = new WeakMap<Request, { spanId: string; scope: Scope; traceId: string }>();
+  const spanMap = new WeakMap<Request, { spanId: string; scope: Scope; traceId: string; startTime: number }>();
 
   return new Elysia({ name: '@logtide/elysia' })
     .onRequest(({ request }) => {
@@ -63,28 +78,53 @@ export function logtide(options: LogtideElysiaOptions) {
       const scope = client.createScope(traceId);
       const url = new URL(request.url);
       const method = request.method;
+      const pathname = url.pathname;
+
+      // Collect start-time attributes
+      const userAgent = request.headers.get('user-agent');
+      const forwardedFor = request.headers.get('x-forwarded-for');
+      const queryString = url.search;
+
+      const startAttributes: Record<string, string | number | boolean | undefined> = {
+        'http.method': method,
+        'http.url': request.url,
+        'http.target': pathname,
+      };
+      if (userAgent) {
+        startAttributes['http.user_agent'] = userAgent;
+      }
+      if (forwardedFor) {
+        startAttributes['net.peer.ip'] = forwardedFor;
+      }
+      if (queryString) {
+        startAttributes['http.query_string'] = queryString;
+      }
 
       const span = client.startSpan({
-        name: `${method} ${url.pathname}`,
+        name: `${method} ${pathname}`,
         traceId,
         parentSpanId,
-        attributes: {
-          'http.method': method,
-          'http.url': request.url,
-          'http.target': url.pathname,
-        },
+        attributes: startAttributes,
       });
 
       scope.spanId = span.spanId;
 
+      // Capture startTime BEFORE adding the breadcrumb
+      const startTime = Date.now();
+
       scope.addBreadcrumb({
         type: 'http',
         category: 'request',
-        message: `${method} ${url.pathname}`,
+        message: `${method} ${pathname}`,
         timestamp: Date.now(),
+        data: {
+          method,
+          url: request.url,
+          ...(userAgent ? { userAgent } : {}),
+        },
       });
 
-      spanMap.set(request, { spanId: span.spanId, scope, traceId });
+      spanMap.set(request, { spanId: span.spanId, scope, traceId, startTime });
     })
     .onAfterHandle(({ request, set }) => {
       const client = hub.getClient();
@@ -92,25 +132,79 @@ export function logtide(options: LogtideElysiaOptions) {
       if (!client || !ctx) return;
 
       const status = typeof set.status === 'number' ? set.status : 200;
-      client.finishSpan(ctx.spanId, status >= 500 ? 'error' : 'ok');
+      const { scope, spanId, traceId, startTime } = ctx;
+      const url = new URL(request.url);
+      const pathname = url.pathname;
+      const method = request.method;
+      const durationMs = Date.now() - startTime;
+
+      // Add response breadcrumb BEFORE calling finishSpan so it's included in events
+      scope.addBreadcrumb({
+        type: 'http',
+        category: 'response',
+        message: `${status} ${method} ${pathname}`,
+        level: status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info',
+        timestamp: Date.now(),
+        data: { status, duration_ms: durationMs },
+      });
+
+      // Convert breadcrumbs to SpanEvents
+      const events: SpanEvent[] = breadcrumbsToEvents(scope);
+
+      const extraAttributes: Record<string, string | number | boolean | undefined> = {
+        'http.status_code': status,
+        'duration_ms': durationMs,
+      };
+
+      client.finishSpan(spanId, status >= 500 ? 'error' : 'ok', {
+        extraAttributes,
+        events,
+      });
 
       // Inject traceparent
       if (typeof set.headers === 'object' && set.headers !== null) {
         (set.headers as Record<string, string>)['traceparent'] =
-          createTraceparent(ctx.traceId, ctx.spanId, true);
+          createTraceparent(traceId, spanId, true);
       }
     })
-    .onError(({ request, error }) => {
+    .onError(({ request, error, set }) => {
       const client = hub.getClient();
       const ctx = spanMap.get(request);
       if (!client) return;
 
       if (ctx) {
-        client.finishSpan(ctx.spanId, 'error');
+        const { scope, spanId, startTime } = ctx;
+        const url = new URL(request.url);
+        const pathname = url.pathname;
+        const method = request.method;
+        const durationMs = Date.now() - startTime;
+        const status = typeof set?.status === 'number' ? set.status : 500;
+
+        // Add response breadcrumb
+        scope.addBreadcrumb({
+          type: 'http',
+          category: 'response',
+          message: `${status} ${method} ${pathname}`,
+          level: 'error',
+          timestamp: Date.now(),
+          data: { status, duration_ms: durationMs },
+        });
+
+        // Convert breadcrumbs to SpanEvents
+        const events: SpanEvent[] = breadcrumbsToEvents(scope);
+
+        client.finishSpan(spanId, 'error', {
+          extraAttributes: {
+            'http.status_code': status,
+            'duration_ms': durationMs,
+          },
+          events,
+        });
+
         client.captureError(error, {
           'http.url': request.url,
           'http.method': request.method,
-        }, ctx.scope);
+        }, scope);
       } else {
         client.captureError(error, {
           'http.url': request.url,

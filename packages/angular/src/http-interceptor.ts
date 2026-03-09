@@ -5,9 +5,10 @@ import {
   HttpHandler,
   HttpEvent,
   HttpErrorResponse,
+  HttpResponse,
 } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { hub, createTraceparent, generateSpanId } from '@logtide/core';
+import { hub, createTraceparent } from '@logtide/core';
 
 /**
  * Angular HTTP Interceptor that:
@@ -26,6 +27,7 @@ export class LogtideHttpInterceptor implements HttpInterceptor {
 
     // Start a span for this outgoing request
     let spanId: string | undefined;
+    const startTime = Date.now();
 
     if (client) {
       const span = client.startSpan({
@@ -35,6 +37,7 @@ export class LogtideHttpInterceptor implements HttpInterceptor {
         attributes: {
           'http.method': req.method,
           'http.url': req.urlWithParams,
+          'http.target': req.url,
         },
       });
 
@@ -52,22 +55,50 @@ export class LogtideHttpInterceptor implements HttpInterceptor {
         type: 'http',
         category: 'http.request',
         message: `${req.method} ${req.urlWithParams}`,
-        timestamp: Date.now(),
+        timestamp: startTime,
         data: { method: req.method, url: req.urlWithParams },
       });
     }
 
     return next.handle(clonedReq).pipe(
       tap({
-        next: () => {
-          // On success, finish span
-          if (client && spanId) {
-            client.finishSpan(spanId, 'ok');
+        next: (event: HttpEvent<unknown>) => {
+          if (event instanceof HttpResponse) {
+            // On success, finish span with status code
+            if (client && spanId) {
+              const durationMs = Date.now() - startTime;
+              client.finishSpan(spanId, event.status >= 500 ? 'error' : 'ok', {
+                extraAttributes: {
+                  'http.status_code': event.status,
+                  'duration_ms': durationMs,
+                },
+              });
+
+              hub.addBreadcrumb({
+                type: 'http',
+                category: 'http.response',
+                message: `${req.method} ${req.urlWithParams} → ${event.status}`,
+                level: event.status >= 400 ? 'warn' : 'info',
+                timestamp: Date.now(),
+                data: {
+                  method: req.method,
+                  url: req.urlWithParams,
+                  status: event.status,
+                  duration_ms: durationMs,
+                },
+              });
+            }
           }
         },
         error: (error: HttpErrorResponse) => {
+          const durationMs = Date.now() - startTime;
           if (client && spanId) {
-            client.finishSpan(spanId, 'error');
+            client.finishSpan(spanId, 'error', {
+              extraAttributes: {
+                'http.status_code': error.status,
+                'duration_ms': durationMs,
+              },
+            });
           }
 
           hub.addBreadcrumb({
@@ -81,13 +112,15 @@ export class LogtideHttpInterceptor implements HttpInterceptor {
               url: req.urlWithParams,
               status: error.status,
               statusText: error.statusText,
+              duration_ms: durationMs,
             },
           });
 
           hub.captureError(error, {
             'http.method': req.method,
             'http.url': req.urlWithParams,
-            'http.status': error.status,
+            'http.status_code': error.status,
+            'duration_ms': durationMs,
           });
         },
       }),

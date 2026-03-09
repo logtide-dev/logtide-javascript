@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import type { ClientOptions } from '@logtide/types';
-import type { Scope } from '@logtide/core';
+import type { Scope, SpanEvent } from '@logtide/core';
 import {
   hub,
   ConsoleIntegration,
@@ -11,13 +11,40 @@ import {
 } from '@logtide/core';
 import fp from 'fastify-plugin';
 
-export interface LogtideFastifyOptions extends ClientOptions {}
+export interface LogtideFastifyOptions extends ClientOptions {
+  includeRequestBody?: boolean;
+  includeRequestHeaders?: boolean | string[];
+}
 
 declare module 'fastify' {
   interface FastifyRequest {
     logtideScope?: Scope;
     logtideTraceId?: string;
   }
+}
+
+const SENSITIVE_HEADERS = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'x-api-key',
+  'x-auth-token',
+  'proxy-authorization',
+]);
+
+function breadcrumbsToEvents(scope: Scope): SpanEvent[] {
+  return scope.getBreadcrumbs().map((b) => ({
+    name: b.message,
+    timestamp: b.timestamp,
+    attributes: {
+      'breadcrumb.type': b.type,
+      ...(b.category ? { 'breadcrumb.category': b.category } : {}),
+      ...(b.level ? { 'breadcrumb.level': b.level } : {}),
+      ...Object.fromEntries(
+        Object.entries(b.data ?? {}).map(([k, v]) => [`data.${k}`, String(v)])
+      ),
+    },
+  }));
 }
 
 /**
@@ -45,7 +72,13 @@ export const logtide = fp(
     });
 
     // Store span IDs per request for cross-hook access
-    const requestSpans = new WeakMap<FastifyRequest, { spanId: string; traceId: string; method: string; pathname: string }>();
+    const requestSpans = new WeakMap<FastifyRequest, {
+      spanId: string;
+      traceId: string;
+      method: string;
+      pathname: string;
+      startTime: number;
+    }>();
 
     fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
       const client = hub.getClient();
@@ -69,27 +102,50 @@ export const logtide = fp(
       }
 
       const scope = client.createScope(traceId);
+      const startTime = Date.now();
       const method = request.method;
       const pathname = request.url.split('?')[0];
+
+      // Collect optional start-time attributes
+      const userAgent = request.headers['user-agent'];
+      const clientIp = request.ip;
+      const queryString = request.url.includes('?') ? request.url.slice(request.url.indexOf('?')) : '';
+
+      const startAttributes: Record<string, string | number | boolean | undefined> = {
+        'http.method': method,
+        'http.url': request.url,
+        'http.target': pathname,
+      };
+      if (userAgent) {
+        startAttributes['http.user_agent'] = userAgent;
+      }
+      if (clientIp) {
+        startAttributes['net.peer.ip'] = clientIp;
+      }
+      if (queryString) {
+        startAttributes['http.query_string'] = queryString;
+      }
 
       const span = client.startSpan({
         name: `${method} ${pathname}`,
         traceId,
         parentSpanId,
-        attributes: {
-          'http.method': method,
-          'http.url': request.url,
-          'http.target': pathname,
-        },
+        attributes: startAttributes,
       });
 
       scope.spanId = span.spanId;
 
+      // Request breadcrumb with data field
       scope.addBreadcrumb({
         type: 'http',
         category: 'request',
         message: `${method} ${pathname}`,
         timestamp: Date.now(),
+        data: {
+          method,
+          url: request.url,
+          ...(userAgent ? { userAgent } : {}),
+        },
       });
 
       // Make scope available on the request
@@ -100,7 +156,7 @@ export const logtide = fp(
       reply.header('traceparent', createTraceparent(traceId, span.spanId, true));
 
       // Store span info for onResponse/onError hooks
-      requestSpans.set(request, { spanId: span.spanId, traceId, method, pathname });
+      requestSpans.set(request, { spanId: span.spanId, traceId, method, pathname, startTime });
     });
 
     fastify.addHook('onResponse', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -109,15 +165,91 @@ export const logtide = fp(
       if (!client || !spanInfo) return;
 
       const status = reply.statusCode;
-      client.finishSpan(spanInfo.spanId, status >= 500 ? 'error' : 'ok');
+      const durationMs = Date.now() - spanInfo.startTime;
+      const scope = request.logtideScope;
+
+      // Build extra attributes
+      const extraAttributes: Record<string, string | number | boolean | undefined> = {
+        'http.status_code': status,
+        'duration_ms': durationMs,
+      };
+
+      // Add route template if available
+      const routePath =
+        (request as any).routeOptions?.url ??
+        (request as any).routerPath;
+      if (routePath != null) {
+        extraAttributes['http.route'] = routePath as string;
+      }
+
+      // Opt-in request body capture
+      if (options.includeRequestBody && (request as unknown as { body?: unknown }).body != null) {
+        try {
+          const bodyStr = JSON.stringify((request as unknown as { body?: unknown }).body);
+          if (bodyStr && bodyStr !== '{}' && bodyStr !== 'null') {
+            extraAttributes['http.request_body'] = bodyStr.slice(0, 4096);
+          }
+        } catch {
+          // Ignore stringification errors for circular structures
+        }
+      }
+
+      // Opt-in request headers capture
+      if (options.includeRequestHeaders) {
+        let headersToCapture: Record<string, string>;
+
+        if (Array.isArray(options.includeRequestHeaders)) {
+          const specifiedHeaders = options.includeRequestHeaders;
+          headersToCapture = {};
+          for (const headerName of specifiedHeaders) {
+            const val = request.headers[headerName.toLowerCase()];
+            if (val !== undefined) {
+              headersToCapture[headerName.toLowerCase()] = Array.isArray(val) ? val.join(', ') : val;
+            }
+          }
+        } else {
+          headersToCapture = {};
+          for (const [key, val] of Object.entries(request.headers)) {
+            if (!SENSITIVE_HEADERS.has(key.toLowerCase()) && val !== undefined) {
+              headersToCapture[key] = Array.isArray(val) ? val.join(', ') : val;
+            }
+          }
+        }
+
+        const headersStr = JSON.stringify(headersToCapture);
+        if (headersStr && headersStr !== '{}') {
+          extraAttributes['http.request_headers'] = headersStr.slice(0, 4096);
+        }
+      }
+
+      // Add response breadcrumb to scope BEFORE calling finishSpan so it's included in events
+      if (scope) {
+        scope.addBreadcrumb({
+          type: 'http',
+          category: 'response',
+          message: `${status} ${spanInfo.method} ${spanInfo.pathname}`,
+          level: status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info',
+          timestamp: Date.now(),
+          data: { status, duration_ms: durationMs },
+        });
+      }
+
+      // Convert breadcrumbs to SpanEvents
+      const events: SpanEvent[] = scope ? breadcrumbsToEvents(scope) : [];
+
+      client.finishSpan(spanInfo.spanId, status >= 500 ? 'error' : 'ok', {
+        extraAttributes,
+        events,
+      });
 
       if (status >= 500) {
         client.captureLog('error', `HTTP ${status} ${spanInfo.method} ${spanInfo.pathname}`, {
           'http.method': spanInfo.method,
           'http.url': request.url,
           'http.target': spanInfo.pathname,
-          'http.status_code': String(status),
-        }, request.logtideScope);
+          'http.status_code': status,
+          duration_ms: durationMs,
+        }, scope);
       }
     });
 

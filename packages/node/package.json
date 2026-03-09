@@ -1,6 +1,6 @@
 {
   "name": "@logtide/sdk-node",
-  "version": "0.5.6",
+  "version": "0.6.1",
   "description": "Official Node.js SDK for LogTide (logtide.dev) - Self-hosted log management with advanced features: retry logic, circuit breaker, query API, live streaming, and middleware support",
   "type": "module",
   "main": "./dist/index.cjs",

@@ -5,6 +5,7 @@ import { BreadcrumbBuffer } from './breadcrumb-buffer';
 export class Scope {
   traceId: string;
   spanId?: string;
+  sessionId?: string;
   service?: string;
   tags: Record<string, string> = {};
   extras: Record<string, unknown> = {};
@@ -18,6 +19,11 @@ export class Scope {
 
   setService(service: string): this {
     this.service = service;
+    return this;
+  }
+
+  setSessionId(id: string): this {
+    this.sessionId = id;
     return this;
   }
 
@@ -57,6 +63,7 @@ export class Scope {
   clone(): Scope {
     const scope = new Scope(this.traceId);
     scope.spanId = this.spanId;
+    scope.sessionId = this.sessionId;
     scope.service = this.service;
     scope.tags = { ...this.tags };
     scope.extras = { ...this.extras };

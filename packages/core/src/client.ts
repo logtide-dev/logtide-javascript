@@ -6,6 +6,8 @@ import type {
   Integration,
   LogLevel,
   Span,
+  SpanAttributes,
+  SpanEvent,
   Transport,
 } from '@logtide/types';
 import { resolveDSN } from './dsn';
@@ -41,7 +43,10 @@ class DefaultTransport implements Transport {
     });
 
     this.spanTransport = new BatchTransport({
-      inner: new OtlpHttpTransport(dsn, options.service || 'unknown'),
+      inner: new OtlpHttpTransport(dsn, options.service || 'unknown', {
+        environment: options.environment,
+        release: options.release,
+      }),
       batchSize: options.batchSize,
       flushInterval: options.flushInterval,
       maxBufferSize: options.maxBufferSize,
@@ -83,11 +88,16 @@ export class LogtideClient implements IClient {
     this.options = options;
     this.globalBreadcrumbs = new BreadcrumbBuffer(options.maxBreadcrumbs ?? 100);
 
+    let transport: Transport & { destroy?: () => void };
     if (options.transport) {
-      this.transport = options.transport;
+      transport = options.transport;
     } else {
-      this.transport = new DefaultTransport(options);
+      transport = new DefaultTransport(options);
     }
+    if (options.transportWrapper) {
+      transport = options.transportWrapper(transport) as Transport & { destroy?: () => void };
+    }
+    this.transport = transport;
 
     // Install integrations
     if (options.integrations) {
@@ -127,6 +137,12 @@ export class LogtideClient implements IClient {
     metadata?: Record<string, unknown>,
     scope?: Scope,
   ): void {
+    // Merge scope breadcrumbs with client-level breadcrumbs (from integrations).
+    // Integrations call client.addBreadcrumb() directly, which writes to globalBreadcrumbs.
+    // Hub calls also write to the scope. Deduplicate by using the larger set,
+    // which is always globalBreadcrumbs since it receives from both paths.
+    const breadcrumbs = this.globalBreadcrumbs.getAll();
+
     const entry: InternalLogEntry = {
       service: this.resolveService(scope),
       level: level as LogLevel,
@@ -137,10 +153,11 @@ export class LogtideClient implements IClient {
         ...(this.options.environment ? { environment: this.options.environment } : {}),
         ...(this.options.release ? { release: this.options.release } : {}),
         ...(scope ? { tags: scope.tags, ...scope.extras } : {}),
+        ...(breadcrumbs.length > 0 ? { breadcrumbs } : {}),
       },
       trace_id: scope?.traceId,
       span_id: scope?.spanId,
-      breadcrumbs: scope?.getBreadcrumbs() ?? this.globalBreadcrumbs.getAll(),
+      session_id: scope?.sessionId,
     };
 
     this.transport.sendLogs([entry]);
@@ -189,11 +206,38 @@ export class LogtideClient implements IClient {
     return this.spanManager.startSpan(options);
   }
 
-  finishSpan(spanId: string, status: 'ok' | 'error' = 'ok'): void {
-    const span = this.spanManager.finishSpan(spanId, status);
+  finishSpan(
+    spanId: string,
+    status: 'ok' | 'error' = 'ok',
+    options?: { extraAttributes?: SpanAttributes; events?: SpanEvent[] },
+  ): void {
+    const span = this.spanManager.finishSpan(spanId, status, options);
     if (span && this.transport.sendSpans) {
       this.transport.sendSpans([span]);
     }
+  }
+
+  /**
+   * Start a child span under the given scope.
+   */
+  startChildSpan(name: string, scope: Scope, attributes?: SpanAttributes): Span {
+    return this.startSpan({
+      name,
+      traceId: scope.traceId,
+      parentSpanId: scope.spanId,
+      attributes,
+    });
+  }
+
+  /**
+   * Finish a child span by ID.
+   */
+  finishChildSpan(
+    spanId: string,
+    status: 'ok' | 'error' = 'ok',
+    options?: { extraAttributes?: SpanAttributes; events?: SpanEvent[] },
+  ): void {
+    this.finishSpan(spanId, status, options);
   }
 
   // ─── Integrations ─────────────────────────────────────

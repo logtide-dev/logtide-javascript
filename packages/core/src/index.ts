@@ -6,6 +6,7 @@ export type {
   Span,
   SpanStatus,
   SpanAttributes,
+  SpanEvent,
   Breadcrumb,
   BreadcrumbType,
   Transport,
@@ -21,6 +22,7 @@ export { hub } from './hub';
 export { Scope } from './scope';
 export { SpanManager, type StartSpanOptions } from './span-manager';
 export { BreadcrumbBuffer } from './breadcrumb-buffer';
+export { startChildSpan, finishChildSpan } from './child-span';
 
 // DSN
 export { parseDSN, resolveDSN } from './dsn';

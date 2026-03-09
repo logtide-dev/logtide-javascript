@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import { createServer, type Server } from 'http';
-import { logtide } from '../src/middleware';
+import { logtide, logtideErrorHandler } from '../src/middleware';
 import type { InternalLogEntry, Span } from '@logtide/types';
 
 function createMockTransport() {
@@ -277,5 +277,207 @@ describe('@logtide/express middleware', () => {
     await listen(app);
     const res = await request(server, '/');
     expect(res.status).toBe(200);
+  });
+
+  // ─── New richer traces tests ────────────────────────────────────────────────
+
+  it('should set http.status_code attribute on span for 200', async () => {
+    const app = createApp();
+    app.get('/status-200', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/status-200');
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.status_code']).toBe(200);
+  });
+
+  it('should set http.status_code attribute on span for 404', async () => {
+    const app = createApp();
+    app.get('/status-404', (_req, res) => { res.status(404).send('Not Found'); });
+
+    await listen(app);
+    await request(server, '/status-404');
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.status_code']).toBe(404);
+  });
+
+  it('should set http.status_code attribute on span for 500', async () => {
+    const app = createApp();
+    app.get('/status-500', (_req, res) => { res.status(500).send('Server Error'); });
+
+    await listen(app);
+    await request(server, '/status-500');
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.status_code']).toBe(500);
+  });
+
+  it('should set http.user_agent when User-Agent header is provided', async () => {
+    const app = createApp();
+    app.get('/ua', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/ua', { headers: { 'user-agent': 'TestAgent/1.0' } });
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.user_agent']).toBe('TestAgent/1.0');
+  });
+
+  it('should set http.user_agent when User-Agent header is present', async () => {
+    const app = express();
+    app.use(logtide({
+      dsn: 'https://lp_key@api.logtide.dev/proj',
+      service: 'express-test',
+      transport,
+    }));
+    app.get('/no-ua', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/no-ua', { headers: { 'user-agent': 'CustomAgent/2.0' } });
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.user_agent']).toBeDefined();
+  });
+
+  it('should set duration_ms in span extraAttributes', async () => {
+    const app = createApp();
+    app.get('/duration', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/duration');
+
+    const span = transport.spans[0];
+    expect(span.attributes['duration_ms']).toBeGreaterThanOrEqual(0);
+    expect(typeof span.attributes['duration_ms']).toBe('number');
+  });
+
+  it('should include breadcrumbs as span events (at least request + response)', async () => {
+    const app = createApp();
+    app.get('/events', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/events');
+
+    const span = transport.spans[0];
+    expect(span.events).toBeDefined();
+    expect(span.events!.length).toBeGreaterThanOrEqual(2);
+
+    // First event should be request breadcrumb
+    const requestEvent = span.events!.find(e => e.name.includes('GET /events'));
+    expect(requestEvent).toBeDefined();
+
+    // Should also have a response event
+    const responseEvent = span.events!.find(e => e.name.match(/^\d{3} GET \/events$/));
+    expect(responseEvent).toBeDefined();
+  });
+
+  it('should set http.query_string on span when query params are present', async () => {
+    const app = createApp();
+    app.get('/search', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/search?q=hello&page=1');
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.query_string']).toBe('?q=hello&page=1');
+  });
+
+  it('should set http.route when route matches', async () => {
+    const app = createApp();
+    app.get('/users/:id', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/users/42');
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.route']).toBe('/users/:id');
+  });
+
+  it('should include duration_ms in 5xx error log metadata', async () => {
+    const app = createApp();
+    app.get('/err-log', (_req, res) => { res.status(500).send('Server Error'); });
+
+    await listen(app);
+    await request(server, '/err-log');
+
+    const errLog = transport.logs.find(l => l.level === 'error');
+    expect(errLog).toBeDefined();
+    expect(errLog!.metadata?.duration_ms).toBeDefined();
+    expect(typeof errLog!.metadata?.duration_ms).toBe('number');
+  });
+
+  it('should capture request headers when includeRequestHeaders is true', async () => {
+    const app = express();
+    app.use(logtide({
+      dsn: 'https://lp_key@api.logtide.dev/proj',
+      service: 'express-test',
+      transport,
+      includeRequestHeaders: true,
+    }));
+    app.get('/headers', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/headers', { headers: { 'x-request-id': 'abc123' } });
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.request_headers']).toBeDefined();
+    const headers = JSON.parse(span.attributes['http.request_headers'] as string);
+    // Sensitive headers must not be present
+    expect(headers['authorization']).toBeUndefined();
+    expect(headers['cookie']).toBeUndefined();
+    // Non-sensitive custom header should be present
+    expect(headers['x-request-id']).toBe('abc123');
+  });
+
+  it('should capture only specified headers when includeRequestHeaders is a string array', async () => {
+    const app = express();
+    app.use(logtide({
+      dsn: 'https://lp_key@api.logtide.dev/proj',
+      service: 'express-test',
+      transport,
+      includeRequestHeaders: ['x-request-id'],
+    }));
+    app.get('/headers-select', (_req, res) => { res.send('ok'); });
+
+    await listen(app);
+    await request(server, '/headers-select', {
+      headers: { 'x-request-id': 'req-42', 'x-other': 'ignored' },
+    });
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.request_headers']).toBeDefined();
+    const headers = JSON.parse(span.attributes['http.request_headers'] as string);
+    expect(headers['x-request-id']).toBe('req-42');
+    expect(headers['x-other']).toBeUndefined();
+  });
+
+  it('should export logtideErrorHandler that captures errors with captureError', async () => {
+    const app = express();
+    app.use(logtide({
+      dsn: 'https://lp_key@api.logtide.dev/proj',
+      service: 'express-test',
+      transport,
+    }));
+    app.get('/throw', (_req, _res, next) => {
+      next(new Error('test error'));
+    });
+    // Express error handler (4 params)
+    app.use(logtideErrorHandler());
+    // Final fallback to avoid unhandled error in test
+    app.use((_err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      res.status(500).send('caught');
+    });
+
+    await listen(app);
+    const res = await request(server, '/throw');
+
+    expect(res.status).toBe(500);
+    // captureError calls captureLog which sends a log
+    const errLogs = transport.logs.filter(l => l.level === 'error');
+    expect(errLogs.length).toBeGreaterThanOrEqual(1);
+    const errLog = errLogs.find(l => l.message === 'test error');
+    expect(errLog).toBeDefined();
   });
 });

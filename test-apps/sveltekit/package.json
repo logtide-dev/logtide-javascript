@@ -12,9 +12,9 @@
     "@logtide/sveltekit": "workspace:*",
     "@logtide/core": "workspace:*",
     "@sveltejs/adapter-auto": "^4.0.0",
-    "@sveltejs/kit": "^2.16.0",
+    "@sveltejs/kit": "^2.52.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
-    "svelte": "^5.0.0",
+    "svelte": "^5.53.5",
     "vite": "^6.0.0"
   },
   "devDependencies": {
