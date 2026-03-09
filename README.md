@@ -30,6 +30,8 @@
 | [`@logtide/hono`](./packages/hono) | [![npm](https://img.shields.io/npm/v/@logtide/hono?color=blue)](https://www.npmjs.com/package/@logtide/hono) | Hono middleware |
 | [`@logtide/angular`](./packages/angular) | [![npm](https://img.shields.io/npm/v/@logtide/angular?color=blue)](https://www.npmjs.com/package/@logtide/angular) | Angular ErrorHandler, HTTP Interceptor |
 | [`@logtide/elysia`](./packages/elysia) | [![npm](https://img.shields.io/npm/v/@logtide/elysia?color=blue)](https://www.npmjs.com/package/@logtide/elysia) | Elysia plugin |
+| [`@logtide/browser`](./packages/browser) | [![npm](https://img.shields.io/npm/v/@logtide/browser?color=blue)](https://www.npmjs.com/package/@logtide/browser) | Browser SDK — Web Vitals, breadcrumbs, offline transport |
+| [`@logtide/cli`](./packages/cli) | [![npm](https://img.shields.io/npm/v/@logtide/cli?color=blue)](https://www.npmjs.com/package/@logtide/cli) | CLI — source maps upload and release management |
 | [`@logtide/sdk-node`](./packages/node) | [![npm](https://img.shields.io/npm/v/@logtide/sdk-node?color=blue)](https://www.npmjs.com/package/@logtide/sdk-node) | Legacy Node.js SDK _(use `@logtide/express` or `@logtide/fastify` instead)_ |
 
 ## Quick Start
@@ -65,6 +67,24 @@ npm install @logtide/elysia    # Elysia
 
 See each package's README for framework-specific setup instructions.
 
+## CLI
+
+The `@logtide/cli` package provides a command-line tool for managing source maps and releases.
+
+```bash
+# Install globally
+npm install -g @logtide/cli
+
+# Or use npx
+npx @logtide/cli sourcemaps upload --api-url https://your-logtide-instance.com --api-key lp_your_key ./dist
+```
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `logtide sourcemaps upload` | Upload source maps to LogTide server for stack trace deobfuscation |
+
 ---
 
 ## Architecture
@@ -82,6 +102,8 @@ See each package's README for framework-specific setup instructions.
 ├── @logtide/hono       ← Hono middleware
 ├── @logtide/angular    ← Angular (ErrorHandler + HttpInterceptor)
 ├── @logtide/elysia     ← Elysia plugin
+├── @logtide/browser    ← Browser SDK (Web Vitals, breadcrumbs, offline)
+├── @logtide/cli        ← CLI (source maps upload)
 └── @logtide/sdk-node   ← Legacy standalone Node.js SDK
 ```
 

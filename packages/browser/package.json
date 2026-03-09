@@ -1,6 +1,6 @@
 {
   "name": "@logtide/browser",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Logtide browser SDK — Web Vitals, breadcrumbs, session context, offline resilience",
   "type": "module",
   "main": "./dist/index.cjs",
