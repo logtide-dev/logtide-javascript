@@ -244,5 +244,68 @@ describe('@logtide/nextjs server', () => {
       expect(transport.logs[0].message).toBe('render failed');
       expect(transport.logs[0].metadata?.['route.path']).toBe('/page');
     });
+
+    it('should tag RSC errors with react.server-component mechanism', async () => {
+      const { captureRequestError } = await import('../src/server/error-handler');
+
+      captureRequestError(
+        new Error('rsc render error'),
+        { method: 'GET', url: '/rsc-page', headers: {} },
+        {
+          routerKind: 'App Router',
+          routePath: '/rsc-page',
+          routeType: 'page',
+          renderSource: 'react-server-components',
+        },
+      );
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.mechanism).toBe('react.server-component');
+      expect(transport.logs[0].metadata?.['render.source']).toBe('react-server-components');
+    });
+
+    it('should tag RSC payload errors as react.server-component', async () => {
+      const { captureRequestError } = await import('../src/server/error-handler');
+
+      captureRequestError(
+        new Error('rsc payload error'),
+        { method: 'GET', url: '/page', headers: {} },
+        {
+          routerKind: 'App Router',
+          routePath: '/page',
+          routeType: 'page',
+          renderSource: 'react-server-components-payload',
+        },
+      );
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.mechanism).toBe('react.server-component');
+    });
+
+    it('should use nextjs.page mechanism for non-RSC page errors', async () => {
+      const { captureRequestError } = await import('../src/server/error-handler');
+
+      captureRequestError(
+        new Error('page error'),
+        { method: 'GET', url: '/page', headers: {} },
+        { routerKind: 'App Router', routePath: '/page', routeType: 'page' },
+      );
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.mechanism).toBe('nextjs.page');
+    });
+
+    it('should use nextjs.route mechanism for API route errors', async () => {
+      const { captureRequestError } = await import('../src/server/error-handler');
+
+      captureRequestError(
+        new Error('api error'),
+        { method: 'POST', url: '/api/data', headers: {} },
+        { routerKind: 'App Router', routePath: '/api/data', routeType: 'route' },
+      );
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.mechanism).toBe('nextjs.route');
+    });
   });
 });

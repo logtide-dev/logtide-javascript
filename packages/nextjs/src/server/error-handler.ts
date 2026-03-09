@@ -12,12 +12,23 @@ export function captureRequestError(
   const client = hub.getClient();
   if (!client) return;
 
+  // Detect RSC errors
+  const isRSC = context.renderSource === 'react-server-components'
+    || context.renderSource === 'react-server-components-payload';
+
+  const mechanism = isRSC
+    ? 'react.server-component'
+    : `nextjs.${context.routeType}`;
+
   const scope = client.createScope();
   scope.setTag('route.kind', context.routerKind);
   scope.setTag('route.path', context.routePath);
   scope.setTag('route.type', context.routeType);
   if (context.renderSource) {
     scope.setTag('render.source', context.renderSource);
+  }
+  if (isRSC) {
+    scope.setTag('rsc', 'true');
   }
 
   scope.addBreadcrumb({
@@ -34,10 +45,12 @@ export function captureRequestError(
   });
 
   client.captureError(error, {
+    mechanism,
     'http.method': request.method,
     'http.url': request.url,
     'route.path': context.routePath,
     'route.kind': context.routerKind,
     'route.type': context.routeType,
+    ...(isRSC ? { 'render.source': context.renderSource } : {}),
   }, scope);
 }

@@ -1,2 +1,2 @@
 export { logtideHandle, logtideHandleError, logtideHandleFetch } from './server/index';
-export { initLogtide } from './client/index';
+export { initLogtide, createBoundaryHandler } from './client/index';

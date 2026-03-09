@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-03-09
+
+### Added
+
+#### Browser SDK (`@logtide/browser`)
+- New `@logtide/browser` package with session context, anonymous session ID, and page URL tracking
+- `WebVitalsIntegration` — captures Core Web Vitals (LCP, FID, CLS, INP, TTFB), wired into all framework packages
+- Click breadcrumb integration — automatic tracking of user clicks with element selector
+- Network breadcrumb integration — tracks fetch/XHR requests with method, URL, status, and duration
+- `OfflineTransport` with `navigator.sendBeacon` support for reliable delivery on page unload
+
+#### CLI (`@logtide/cli`)
+- New `@logtide/cli` package — `logtide` command-line tool
+- `logtide sourcemaps upload` command for uploading source maps to LogTide server
+- Built with `commander` for CLI argument parsing
+
+#### Framework Improvements
+- Framework-specific improvements across all packages (phase 6)
+
+### Fixed
+- Fixed CLI typecheck: typed `response.json()` as `Record`
+
 ## [0.6.1] - 2026-02-28
 
 ### Fixed
@@ -133,5 +155,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Root README with package table, architecture diagram, development guide
 - Branch protection documentation (`.github/BRANCH_PROTECTION.md`)
 
+[0.7.0]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.7.0
+[0.6.1]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.6.1
+[0.6.0]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.6.0
 [0.5.6]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.5.6
 [0.5.5]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.5.5

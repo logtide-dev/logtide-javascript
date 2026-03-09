@@ -89,8 +89,10 @@ describe('LogtideClient', () => {
     client.addBreadcrumb({ type: 'http', message: 'GET /api', timestamp: 1 });
     client.captureLog('info', 'test');
 
-    expect(transport.logs[0].breadcrumbs).toHaveLength(1);
-    expect(transport.logs[0].breadcrumbs![0].message).toBe('GET /api');
+    const metadata = transport.logs[0].metadata as Record<string, unknown>;
+    const breadcrumbs = metadata.breadcrumbs as Array<{ message: string }>;
+    expect(breadcrumbs).toHaveLength(1);
+    expect(breadcrumbs[0].message).toBe('GET /api');
   });
 
   it('should start and finish spans', () => {

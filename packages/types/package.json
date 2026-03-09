@@ -1,6 +1,6 @@
 {
   "name": "@logtide/types",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Shared type definitions for the LogTide SDK ecosystem",
   "type": "module",
   "main": "./dist/index.cjs",

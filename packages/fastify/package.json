@@ -1,6 +1,6 @@
 {
   "name": "@logtide/fastify",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "LogTide SDK plugin for Fastify — request tracing and error capture",
   "type": "module",
   "main": "./dist/index.cjs",

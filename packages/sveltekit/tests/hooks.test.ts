@@ -224,7 +224,6 @@ describe('@logtide/sveltekit', () => {
 
   describe('logtideHandleError', () => {
     it('should capture errors', () => {
-      // First init the hub so handleError can use it
       logtideHandle({
         dsn: 'https://lp_key@api.logtide.dev/proj',
         service: 'sveltekit-test',
@@ -261,6 +260,100 @@ describe('@logtide/sveltekit', () => {
       expect(transport.logs).toHaveLength(1);
       expect(transport.logs[0].metadata?.['http.status_code']).toBe(404);
       expect(transport.logs[0].metadata?.['http.status']).toBeUndefined();
+    });
+
+    it('should include route id when event has route', () => {
+      logtideHandle({
+        dsn: 'https://lp_key@api.logtide.dev/proj',
+        service: 'sveltekit-test',
+        transport,
+      });
+
+      const handleError = logtideHandleError();
+
+      handleError({
+        error: new Error('route error'),
+        event: {
+          request: new Request('http://localhost/blog/123'),
+          url: new URL('http://localhost/blog/123'),
+          route: { id: '/blog/[slug]' },
+          locals: {},
+        },
+        status: 500,
+        message: 'Internal Error',
+      });
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.['sveltekit.route']).toBe('/blog/[slug]');
+    });
+
+    it('should tag as server context when scope exists in locals', () => {
+      logtideHandle({
+        dsn: 'https://lp_key@api.logtide.dev/proj',
+        service: 'sveltekit-test',
+        transport,
+      });
+
+      const handleError = logtideHandleError();
+
+      handleError({
+        error: new Error('server load error'),
+        event: {
+          request: new Request('http://localhost/page'),
+          url: new URL('http://localhost/page'),
+          route: { id: '/page' },
+          locals: { __logtideScope: {} },
+        },
+        status: 500,
+        message: 'Internal Error',
+      });
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.['sveltekit.context']).toBe('server');
+    });
+
+    it('should tag as client context when no scope in locals', () => {
+      logtideHandle({
+        dsn: 'https://lp_key@api.logtide.dev/proj',
+        service: 'sveltekit-test',
+        transport,
+      });
+
+      const handleError = logtideHandleError();
+
+      handleError({
+        error: new Error('client error'),
+        event: {
+          request: new Request('http://localhost/page'),
+          url: new URL('http://localhost/page'),
+          route: { id: '/page' },
+          locals: {},
+        },
+        status: 500,
+        message: 'Internal Error',
+      });
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.['sveltekit.context']).toBe('client');
+    });
+
+    it('should include mechanism tag', () => {
+      logtideHandle({
+        dsn: 'https://lp_key@api.logtide.dev/proj',
+        service: 'sveltekit-test',
+        transport,
+      });
+
+      const handleError = logtideHandleError();
+
+      handleError({
+        error: new Error('error'),
+        status: 500,
+        message: 'error',
+      });
+
+      expect(transport.logs).toHaveLength(1);
+      expect(transport.logs[0].metadata?.mechanism).toBe('sveltekit.handleError');
     });
   });
 

@@ -37,6 +37,8 @@ export interface ClientOptions {
   debug?: boolean;
   /** Custom transport (overrides default) */
   transport?: Transport;
+  /** Wrap the auto-created transport (e.g. with OfflineTransport) */
+  transportWrapper?: (transport: Transport) => Transport;
   /** Integrations to install */
   integrations?: Integration[];
   /** Max breadcrumbs to keep (default: 100) */
