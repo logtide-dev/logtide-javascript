@@ -1,6 +1,6 @@
 {
   "name": "@logtide/angular",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "LogTide SDK integration for Angular — ErrorHandler, HTTP Interceptor, trace propagation",
   "type": "module",
   "main": "./dist/index.cjs",

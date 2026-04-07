@@ -155,6 +155,16 @@ jobs:
             fi
           done
 
+      - name: Verify workspace deps were rewritten
+        run: |
+          # Refuse to publish if any package.json still contains "workspace:" — this would
+          # produce broken tarballs that fail to install (see logtide-dev/logtide#189).
+          if grep -n '"workspace:' packages/*/package.json; then
+            echo "::error::workspace: protocol still present in package.json after rewrite. Refusing to publish."
+            exit 1
+          fi
+          echo "OK: no workspace: protocol references remain in packages/*/package.json"
+
       # Publish in dependency order: types -> core -> all others
       - name: Publish @logtide/types
         continue-on-error: true

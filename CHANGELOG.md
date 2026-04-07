@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-04-07
+
+### Fixed
+- **Broken 0.7.0 release**: All `@logtide/*@0.7.0` packages were published with `workspace:*` literals in their `dependencies`, causing `ERR_PNPM_WORKSPACE_PKG_NOT_FOUND` on `pnpm add` and equivalent failures on npm. Republished with proper version specifiers ([#189](https://github.com/logtide-dev/logtide/issues/189)).
+
+### Changed
+- **CI hardening**: `publish.yml` now fails fast if any `package.json` still contains the `workspace:` protocol after the version-rewrite step, preventing future broken releases.
+
 ## [0.7.0] - 2026-03-09
 
 ### Added
@@ -155,6 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Root README with package table, architecture diagram, development guide
 - Branch protection documentation (`.github/BRANCH_PROTECTION.md`)
 
+[0.7.1]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.7.1
 [0.7.0]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.7.0
 [0.6.1]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.6.1
 [0.6.0]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.6.0
