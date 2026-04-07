@@ -1,6 +1,6 @@
 {
   "name": "@logtide/cli",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "LogTide CLI — upload source maps and manage releases",
   "type": "module",
   "bin": {

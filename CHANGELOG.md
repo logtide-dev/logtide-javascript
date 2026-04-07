@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-04-07
+
+### Fixed
+- **Smoke test regression**: Upgraded `express` to v5 in `test-app-node-express` — the `path-to-regexp >=8.4.0` security override broke express 4.x, which calls the `pathRegexp` named export removed in 8.4.0. Express 5 uses path-to-regexp 8.4+ natively.
+
+### Changed
+- **Security hardening**: Patched all 54 Dependabot security alerts via `pnpm.overrides` in the root `package.json`. Affected packages include: `tar`, `esbuild`, `webpack`, `cookie`, `minimatch`, `rollup`, `ajv`, `qs`, `devalue`, `hono`, `@angular/core`, `@angular/compiler`, `@sveltejs/kit`, `svelte`, `nanotar`, `simple-git`, `@hono/node-server`, `defu`, `elysia`, `h3`, `immutable`, `lodash`, `node-forge`, `path-to-regexp`, `picomatch`, `serialize-javascript`, `svgo`, `undici`, `vite`, `brace-expansion`, `fastify`, `file-type`, `next`, `srvx`, `unhead`, and `yaml`. `pnpm audit` reports no known vulnerabilities.
+
 ## [0.7.1] - 2026-04-07
 
 ### Fixed
@@ -164,6 +172,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Root README with package table, architecture diagram, development guide
 - Branch protection documentation (`.github/BRANCH_PROTECTION.md`)
 
+[0.7.2]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.7.2
 [0.7.1]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.7.1
 [0.7.0]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.7.0
 [0.6.1]: https://github.com/logtide-dev/logtide-javascript/releases/tag/v0.6.1
