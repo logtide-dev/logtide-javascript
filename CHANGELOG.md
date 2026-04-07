@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **CI hardening**: `publish.yml` now fails fast if any `package.json` still contains the `workspace:` protocol after the version-rewrite step, preventing future broken releases.
+- **CI completeness**: `publish.yml` now also publishes `@logtide/browser` and `@logtide/cli`, which were previously missing from the publish job.
 
 ## [0.7.0] - 2026-03-09
 

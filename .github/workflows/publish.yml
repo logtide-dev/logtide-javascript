@@ -180,6 +180,13 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
+      - name: Publish @logtide/browser
+        continue-on-error: true
+        working-directory: packages/browser
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
       - name: Publish @logtide/sdk-node
         continue-on-error: true
         working-directory: packages/node
@@ -243,6 +250,13 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
 
+      - name: Publish @logtide/cli
+        continue-on-error: true
+        working-directory: packages/cli
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
       - name: Create publish summary
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
@@ -254,6 +268,7 @@ jobs:
           echo "|---------|-----------------|" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/types | \`npm i @logtide/types@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/core | \`npm i @logtide/core@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/browser | \`npm i @logtide/browser@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/sdk-node | \`npm i @logtide/sdk-node@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/express | \`npm i @logtide/express@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/fastify | \`npm i @logtide/fastify@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
@@ -263,3 +278,4 @@ jobs:
           echo "| @logtide/hono | \`npm i @logtide/hono@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/angular | \`npm i @logtide/angular@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| @logtide/elysia | \`npm i @logtide/elysia@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| @logtide/cli | \`npm i -g @logtide/cli@${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
