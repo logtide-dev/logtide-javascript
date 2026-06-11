@@ -10,10 +10,10 @@ describe('parseDSN', () => {
     });
   });
 
-  it('should accept legacy DSN with project ID path and ignore it', () => {
+  it('should preserve a DSN path as base-path prefix (spec 002 §3)', () => {
     const result = parseDSN('https://lp_abc123@api.logtide.dev/my-project');
     expect(result).toEqual({
-      apiUrl: 'https://api.logtide.dev',
+      apiUrl: 'https://api.logtide.dev/my-project',
       apiKey: 'lp_abc123',
     });
   });

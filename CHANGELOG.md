@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-11
+
+### Added
+
+- Every entry now carries `metadata.sdk = {"name": "logtide-javascript", "version": ...}` (caller-provided `sdk` key wins)
+- `Retry-After` header on `429` responses now overrides the computed backoff delay
+- `HttpError` (exported from `@logtide/core` utils) carrying the response status and parsed `Retry-After`
+
+### Changed
+
+- **Client errors (4xx except 408/429) are no longer retried**: the batch is dropped after the first attempt instead of burning the full retry budget
+- **DSN paths are now preserved as a base-path prefix** (`https://lp_key@host/logtide` → ingest at `https://host/logtide/api/v1/ingest`) for reverse-proxied installs. Previously the path was ignored
+
 ## [0.7.2] - 2026-04-07
 
 ### Fixed

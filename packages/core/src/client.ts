@@ -1,3 +1,4 @@
+import { SDK_NAME, SDK_VERSION } from './version';
 import type {
   Breadcrumb,
   Client as IClient,
@@ -149,6 +150,8 @@ export class LogtideClient implements IClient {
       message,
       time: new Date().toISOString(),
       metadata: {
+        // SDK identity stamp (spec 003 §3); caller-provided `sdk` wins
+        sdk: { name: SDK_NAME, version: SDK_VERSION },
         ...metadata,
         ...(this.options.environment ? { environment: this.options.environment } : {}),
         ...(this.options.release ? { release: this.options.release } : {}),

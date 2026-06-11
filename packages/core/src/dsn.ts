@@ -2,14 +2,16 @@ import type { ClientOptions, DSN } from '@logtide/types';
 
 /**
  * Parse a LogTide DSN string into its components.
- * Format: https://lp_APIKEY@host
- * Legacy format with path (https://lp_APIKEY@host/PROJECT_ID) is also accepted; the path is ignored.
+ * Format: https://lp_APIKEY@host[/base-path]
+ * The path, when present, is a base-path prefix (reverse-proxied installs)
+ * and is preserved in the resulting apiUrl (spec 002 §3).
  */
 export function parseDSN(dsn: string): DSN {
   try {
     const url = new URL(dsn);
     const apiKey = url.username;
-    const apiUrl = `${url.protocol}//${url.host}`;
+    const basePath = url.pathname.replace(/\/+$/, '');
+    const apiUrl = `${url.protocol}//${url.host}${basePath === '/' ? '' : basePath}`;
 
     if (!apiKey) {
       throw new Error('Missing API key in DSN');

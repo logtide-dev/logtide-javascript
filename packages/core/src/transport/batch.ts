@@ -1,5 +1,6 @@
 import type { InternalLogEntry, Span, Transport } from '@logtide/types';
 import { CircuitBreaker } from '../utils/circuit-breaker';
+import { HttpError } from '../utils/http-error';
 
 export interface BatchTransportOptions {
   /** Underlying transport to delegate to */
@@ -112,8 +113,22 @@ export class BatchTransport implements Transport {
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Permanent client errors (4xx except 408/429) will not become
+        // valid by retrying: drop the batch after the first attempt.
+        if (lastError instanceof HttpError && !lastError.isRetryable) {
+          if (this.debug) {
+            console.warn(`[LogTide] Non-retryable error (HTTP ${lastError.status}), dropping ${type}`);
+          }
+          break;
+        }
+
         if (attempt < this.maxRetries) {
-          const delay = this.retryDelayMs * Math.pow(2, attempt);
+          let delay = this.retryDelayMs * Math.pow(2, attempt);
+          // A server-provided Retry-After overrides the computed backoff
+          if (lastError instanceof HttpError && lastError.retryAfterMs !== undefined) {
+            delay = lastError.retryAfterMs;
+          }
           if (this.debug) {
             console.warn(`[LogTide] Retry ${attempt + 1}/${this.maxRetries} for ${type}: ${lastError.message}`);
           }

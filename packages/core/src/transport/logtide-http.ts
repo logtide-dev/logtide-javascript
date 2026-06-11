@@ -1,5 +1,6 @@
 import type { InternalLogEntry, Span, Transport } from '@logtide/types';
 import type { DSN } from '@logtide/types';
+import { HttpError, parseRetryAfterMs } from '../utils/http-error';
 
 /** HTTP transport that sends logs to the LogTide native API (/api/v1/ingest). */
 export class LogtideHttpTransport implements Transport {
@@ -21,7 +22,11 @@ export class LogtideHttpTransport implements Transport {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`LogTide ingest failed: HTTP ${response.status}: ${text}`);
+      throw new HttpError(
+        response.status,
+        `LogTide ingest failed: HTTP ${response.status}: ${text}`,
+        parseRetryAfterMs(response.headers.get('Retry-After')),
+      );
     }
   }
 

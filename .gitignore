@@ -52,3 +52,6 @@ next-env.d.ts
 # Claude
 .claude/
 tmpclaude*
+
+test-apps/*/playwright-report/
+test-apps/*/test-results/
