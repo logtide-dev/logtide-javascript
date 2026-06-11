@@ -72,9 +72,10 @@ export async function resetMockServer(mockUrl: string): Promise<void> {
 
 /**
  * Build a DSN string pointing to the mock server.
- * Format: http://lp_testkey@host:port/test-project
+ * Format: http://lp_testkey@host:port
+ * (DSN paths are base-path prefixes per spec 002 §3, so no path here.)
  */
 export function buildMockDSN(mockUrl: string): string {
   const url = new URL(mockUrl);
-  return `${url.protocol}//lp_testkey@${url.host}/test-project`;
+  return `${url.protocol}//lp_testkey@${url.host}`;
 }
