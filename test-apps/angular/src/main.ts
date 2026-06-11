@@ -4,7 +4,7 @@ import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 
 hub.init({
-  dsn: 'http://lp_testkey@127.0.0.1:9103/test-project',
+  dsn: 'http://lp_testkey@127.0.0.1:9103',
   service: 'test-angular',
   environment: 'test',
   batchSize: 1,

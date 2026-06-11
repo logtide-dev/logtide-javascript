@@ -1,7 +1,7 @@
 import { registerLogtide, captureRequestError } from '@logtide/nextjs/server';
 
 export async function register() {
-  const dsn = process.env.LOGTIDE_DSN ?? 'http://lp_testkey@127.0.0.1:9100/test-project';
+  const dsn = process.env.LOGTIDE_DSN ?? 'http://lp_testkey@127.0.0.1:9100';
 
   await registerLogtide({
     dsn,

@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   // the SDK directly via a Nitro server plugin (see server/plugins/).
   runtimeConfig: {
     logtide: {
-      dsn: process.env.LOGTIDE_DSN ?? 'http://lp_testkey@127.0.0.1:9102/test-project',
+      dsn: process.env.LOGTIDE_DSN ?? 'http://lp_testkey@127.0.0.1:9102',
       service: 'test-nuxt',
       environment: 'test',
       batchSize: 1,

@@ -5,7 +5,7 @@ import { hub } from '@logtide/core';
 // creating a separate hub singleton. Initialize it here if needed.
 if (!hub.getClient()) {
   hub.init({
-    dsn: process.env.LOGTIDE_DSN ?? 'http://lp_testkey@127.0.0.1:9100/test-project',
+    dsn: process.env.LOGTIDE_DSN ?? 'http://lp_testkey@127.0.0.1:9100',
     service: 'test-nextjs',
     environment: 'test',
     batchSize: 1,

@@ -21,7 +21,7 @@ export default defineConfig({
     timeout: 90_000,
     reuseExistingServer: !process.env.CI,
     env: {
-      LOGTIDE_DSN: `http://lp_testkey@127.0.0.1:${MOCK_SERVER_PORT}/test-project`,
+      LOGTIDE_DSN: `http://lp_testkey@127.0.0.1:${MOCK_SERVER_PORT}`,
     },
   },
 });
