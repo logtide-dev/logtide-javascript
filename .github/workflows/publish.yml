@@ -1,9 +1,9 @@
 name: Publish to npm
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  # release-published only: `gh release create` pushes the tag AND publishes
+  # the release in one call; the duplicate tag-push trigger ran this
+  # workflow twice per release.
   release:
     types: [published]
   workflow_dispatch:
