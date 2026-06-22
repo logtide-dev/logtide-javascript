@@ -95,6 +95,35 @@ describe('LogtideClient', () => {
     expect(breadcrumbs[0].message).toBe('GET /api');
   });
 
+  it('should use scope breadcrumbs (not the global buffer) when a scope is provided', () => {
+    client.addBreadcrumb({ type: 'console', message: 'global crumb', timestamp: 1 });
+    const scope = client.createScope('scoped-trace');
+    scope.addBreadcrumb({ type: 'http', message: 'scoped crumb', timestamp: 2 });
+
+    client.captureLog('info', 'scoped log', {}, scope);
+
+    const metadata = transport.logs[0].metadata as Record<string, unknown>;
+    const breadcrumbs = metadata.breadcrumbs as Array<{ message: string }>;
+    expect(breadcrumbs).toHaveLength(1);
+    expect(breadcrumbs[0].message).toBe('scoped crumb');
+  });
+
+  it('should not install duplicate integrations with the same name', () => {
+    let setupCount = 0;
+    const makeIntegration = () => ({
+      name: 'dup',
+      setup: () => {
+        setupCount++;
+      },
+      teardown: () => {},
+    });
+
+    client.addIntegration(makeIntegration());
+    client.addIntegration(makeIntegration());
+
+    expect(setupCount).toBe(1);
+  });
+
   it('should start and finish spans', () => {
     const span = client.startSpan({ name: 'test-span' });
 

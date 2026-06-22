@@ -405,6 +405,54 @@ describe('@logtide/fastify plugin', () => {
     expect(headers['x-request-id']).toBe('abc123');
   });
 
+  it('should capture response body when includeResponseBody is true', async () => {
+    const customApp = Fastify();
+    await customApp.register(logtide, {
+      dsn: 'https://lp_key@api.logtide.dev/proj',
+      service: 'fastify-test',
+      transport,
+      includeResponseBody: true,
+    });
+    customApp.post('/echo', async () => ({ ok: true, value: 42 }));
+    app = customApp;
+
+    await customApp.inject({ method: 'POST', url: '/echo', payload: { in: 1 } });
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.response_body']).toBeDefined();
+    const body = JSON.parse(span.attributes['http.response_body'] as string);
+    expect(body.value).toBe(42);
+  });
+
+  it('should not capture response body by default', async () => {
+    const app = await buildApp();
+    app.post('/no-body', async () => ({ secret: 'data' }));
+
+    await app.inject({ method: 'POST', url: '/no-body', payload: {} });
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.response_body']).toBeUndefined();
+  });
+
+  it('should capture request body when includeRequestBody is true', async () => {
+    const customApp = Fastify();
+    await customApp.register(logtide, {
+      dsn: 'https://lp_key@api.logtide.dev/proj',
+      service: 'fastify-test',
+      transport,
+      includeRequestBody: true,
+    });
+    customApp.post('/with-body', async () => 'ok');
+    app = customApp;
+
+    await customApp.inject({ method: 'POST', url: '/with-body', payload: { amount: 1099 } });
+
+    const span = transport.spans[0];
+    expect(span.attributes['http.request_body']).toBeDefined();
+    const body = JSON.parse(span.attributes['http.request_body'] as string);
+    expect(body.amount).toBe(1099);
+  });
+
   it('should capture only specified headers when includeRequestHeaders is a string array', async () => {
     const customApp = Fastify();
     await customApp.register(logtide, {

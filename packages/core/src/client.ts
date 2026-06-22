@@ -138,11 +138,12 @@ export class LogtideClient implements IClient {
     metadata?: Record<string, unknown>,
     scope?: Scope,
   ): void {
-    // Merge scope breadcrumbs with client-level breadcrumbs (from integrations).
-    // Integrations call client.addBreadcrumb() directly, which writes to globalBreadcrumbs.
-    // Hub calls also write to the scope. Deduplicate by using the larger set,
-    // which is always globalBreadcrumbs since it receives from both paths.
-    const breadcrumbs = this.globalBreadcrumbs.getAll();
+    // When a scope is provided, its breadcrumbs are request/run-local and are
+    // the meaningful set for that log — using them avoids leaking the global
+    // (app-wide, accumulated) breadcrumb buffer into per-request logs. Without
+    // a scope (e.g. fire-and-forget logs), fall back to the global buffer that
+    // integrations write to via client.addBreadcrumb().
+    const breadcrumbs = scope ? scope.getBreadcrumbs() : this.globalBreadcrumbs.getAll();
 
     const entry: InternalLogEntry = {
       service: this.resolveService(scope),
@@ -246,6 +247,14 @@ export class LogtideClient implements IClient {
   // ─── Integrations ─────────────────────────────────────
 
   addIntegration(integration: Integration): void {
+    // Guard against installing the same integration twice. The framework
+    // plugins install default integrations (console, global-error) and then
+    // append user-provided ones; without this dedup a caller that re-adds them
+    // would double-wrap console (every log captured twice) and double-bind
+    // global error handlers.
+    if (this.integrations.some((i) => i.name === integration.name)) {
+      return;
+    }
     integration.setup(this);
     this.integrations.push(integration);
   }

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-22
+
+### Added
+
+- **`@logtide/fastify`: `includeResponseBody` option** — captures the serialized response payload (truncated to 4096 chars) into the span attribute `http.response_body`. Opt-in; no redaction is applied, so gate it to non-sensitive routes if needed.
+
+### Fixed
+
+- **Duplicate integrations are now ignored** (`@logtide/core`): `Client.addIntegration` skips an integration whose `name` is already installed. Previously a caller that re-passed the framework defaults (e.g. registering `@logtide/fastify` with `integrations: [new ConsoleIntegration(), new GlobalErrorIntegration()]`) double-wrapped `console.*` — every log produced two identical breadcrumbs — and double-bound the global error handler.
+- **Per-request breadcrumbs in logs** (`@logtide/core`): `captureLog`/`captureError` now attach the breadcrumbs of the provided `Scope` instead of the app-wide global buffer. This stops the global, accumulated console history from leaking into a single request's log metadata. Logs emitted without a scope still use the global buffer as before.
+
 ## [0.8.0] - 2026-06-11
 
 ### Added

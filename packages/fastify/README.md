@@ -109,6 +109,14 @@ All `ClientOptions` from `@logtide/core` are supported:
 | `debug` | `boolean` | `false` | Enable debug logging |
 | `tracesSampleRate` | `number` | `1.0` | Sample rate for traces (0.0 to 1.0) |
 
+Plugin-specific options:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `includeRequestBody` | `boolean` | `false` | Capture the request body into span attribute `http.request_body` (truncated to 4096 chars). No redaction is applied. |
+| `includeResponseBody` | `boolean` | `false` | Capture the serialized response body into span attribute `http.response_body` (truncated to 4096 chars). No redaction is applied — scope to non-sensitive routes if needed. |
+| `includeRequestHeaders` | `boolean \| string[]` | `false` | Capture request headers (sensitive headers like `authorization`/`cookie` are always stripped). Pass an array to capture only specific headers. |
+
 See [`@logtide/core` README](../core/README.md) for the full list of options.
 
 ---

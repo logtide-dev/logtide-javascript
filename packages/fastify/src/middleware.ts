@@ -13,6 +13,7 @@ import fp from 'fastify-plugin';
 
 export interface LogtideFastifyOptions extends ClientOptions {
   includeRequestBody?: boolean;
+  includeResponseBody?: boolean;
   includeRequestHeaders?: boolean | string[];
 }
 
@@ -159,6 +160,25 @@ export const logtide = fp(
       requestSpans.set(request, { spanId: span.spanId, traceId, method, pathname, startTime });
     });
 
+    // Capture the (already serialized) response payload before it is sent.
+    // onSend runs before onResponse, so the captured value is available when
+    // the span is finished. No redaction is applied here — gate behind the
+    // option and scope to specific routes if payloads are sensitive.
+    if (options.includeResponseBody) {
+      fastify.addHook('onSend', async (request: FastifyRequest, _reply: FastifyReply, payload: unknown) => {
+        try {
+          if (typeof payload === 'string') {
+            (request as { __logtideResponseBody?: string }).__logtideResponseBody = payload.slice(0, 4096);
+          } else if (Buffer.isBuffer(payload)) {
+            (request as { __logtideResponseBody?: string }).__logtideResponseBody = payload.toString('utf8').slice(0, 4096);
+          }
+        } catch {
+          // Ignore capture errors (e.g. streams) — never break the response.
+        }
+        return payload;
+      });
+    }
+
     fastify.addHook('onResponse', async (request: FastifyRequest, reply: FastifyReply) => {
       const client = hub.getClient();
       const spanInfo = requestSpans.get(request);
@@ -192,6 +212,12 @@ export const logtide = fp(
         } catch {
           // Ignore stringification errors for circular structures
         }
+      }
+
+      // Opt-in response body capture (populated by the onSend hook above)
+      const responseBody = (request as { __logtideResponseBody?: string }).__logtideResponseBody;
+      if (responseBody != null && responseBody !== '') {
+        extraAttributes['http.response_body'] = responseBody;
       }
 
       // Opt-in request headers capture
