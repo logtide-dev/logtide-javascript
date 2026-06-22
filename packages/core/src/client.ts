@@ -141,9 +141,12 @@ export class LogtideClient implements IClient {
     // When a scope is provided, its breadcrumbs are request/run-local and are
     // the meaningful set for that log — using them avoids leaking the global
     // (app-wide, accumulated) breadcrumb buffer into per-request logs. Without
-    // a scope (e.g. fire-and-forget logs), fall back to the global buffer that
-    // integrations write to via client.addBreadcrumb().
-    const breadcrumbs = scope ? scope.getBreadcrumbs() : this.globalBreadcrumbs.getAll();
+    // a scope (e.g. fire-and-forget logs), or a scope that can't supply
+    // breadcrumbs (it crosses framework boundaries via casts, e.g. SvelteKit's
+    // `event.locals`), fall back to the global buffer that integrations write
+    // to via client.addBreadcrumb().
+    const breadcrumbs =
+      typeof scope?.getBreadcrumbs === 'function' ? scope.getBreadcrumbs() : this.globalBreadcrumbs.getAll();
 
     const entry: InternalLogEntry = {
       service: this.resolveService(scope),
