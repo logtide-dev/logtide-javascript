@@ -6,63 +6,9 @@ import {
   APP_INITIALIZER,
 } from '@angular/core';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import type { Integration, Transport } from '@logtide/types';
-import { hub, GlobalErrorIntegration, resolveDSN } from '@logtide/core';
-import {
-  getSessionId,
-  WebVitalsIntegration,
-  ClickBreadcrumbIntegration,
-  NetworkBreadcrumbIntegration,
-  OfflineTransport,
-  type BrowserClientOptions,
-} from '@logtide/browser';
+import { initLogtide, type BrowserClientOptions } from '@logtide/browser';
 import { LogtideErrorHandler } from './error-handler';
 import { LogtideHttpInterceptor } from './http-interceptor';
-
-function buildBrowserIntegrations(options: BrowserClientOptions): Integration[] {
-  const browserOpts = options.browser ?? {};
-  const integrations: Integration[] = [];
-  const apiUrl = resolveDSN(options).apiUrl;
-
-  if (browserOpts.webVitals) {
-    integrations.push(
-      new WebVitalsIntegration({
-        sampleRate: browserOpts.webVitalsSampleRate,
-      }),
-    );
-  }
-
-  if (browserOpts.clickBreadcrumbs !== false) {
-    const clickOpts = typeof browserOpts.clickBreadcrumbs === 'object'
-      ? browserOpts.clickBreadcrumbs
-      : undefined;
-    integrations.push(new ClickBreadcrumbIntegration(clickOpts));
-  }
-
-  if (browserOpts.networkBreadcrumbs !== false) {
-    const netOpts = typeof browserOpts.networkBreadcrumbs === 'object'
-      ? browserOpts.networkBreadcrumbs
-      : {};
-    integrations.push(
-      new NetworkBreadcrumbIntegration({ ...netOpts, apiUrl }),
-    );
-  }
-
-  return integrations;
-}
-
-function buildTransportWrapper(options: BrowserClientOptions): ((inner: Transport) => Transport) | undefined {
-  const browserOpts = options.browser ?? {};
-  if (browserOpts.offlineResilience === false) return undefined;
-
-  const dsn = resolveDSN(options);
-  return (inner: Transport) => new OfflineTransport({
-    inner,
-    beaconUrl: `${dsn.apiUrl}/api/v1/ingest`,
-    apiKey: dsn.apiKey,
-    debug: options.debug,
-  });
-}
 
 /**
  * Provide LogTide in a standalone Angular app (Angular 17+).
@@ -85,17 +31,7 @@ export function provideLogtide(options: BrowserClientOptions): EnvironmentProvid
       provide: APP_INITIALIZER,
       useFactory: () => {
         return () => {
-          hub.init({
-            service: 'angular',
-            ...options,
-            transportWrapper: buildTransportWrapper(options) ?? options.transportWrapper,
-            integrations: [
-              new GlobalErrorIntegration(),
-              ...buildBrowserIntegrations(options),
-              ...(options.integrations ?? []),
-            ],
-          });
-          hub.getScope().setSessionId(getSessionId());
+          initLogtide(options, { defaultService: 'angular' });
         };
       },
       multi: true,
@@ -128,17 +64,7 @@ export function getLogtideProviders(options: BrowserClientOptions): Provider[] {
       provide: APP_INITIALIZER,
       useFactory: () => {
         return () => {
-          hub.init({
-            service: 'angular',
-            ...options,
-            transportWrapper: buildTransportWrapper(options) ?? options.transportWrapper,
-            integrations: [
-              new GlobalErrorIntegration(),
-              ...buildBrowserIntegrations(options),
-              ...(options.integrations ?? []),
-            ],
-          });
-          hub.getScope().setSessionId(getSessionId());
+          initLogtide(options, { defaultService: 'angular' });
         };
       },
       multi: true,
