@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-06-28
+
+### Added
+
+- **`@logtide/browser`: `initLogtide` export** — the browser SDK now exposes `initLogtide(options)` directly, matching the React integration docs (`import { initLogtide } from '@logtide/browser'`). It wires up the global error handler, the default browser integrations (click/network breadcrumbs, optional Web Vitals) and offline resilience, then binds the session id to the global scope. Resolves [#9](https://github.com/logtide-dev/logtide-javascript/issues/9).
+- **`@logtide/browser`: `buildBrowserIntegrations` / `buildBrowserTransportWrapper` helpers** — exported building blocks used by `initLogtide` and the framework wrappers.
+
+### Changed
+
+- **Framework client init now delegates to `@logtide/browser`** (`@logtide/nextjs`, `@logtide/sveltekit`, `@logtide/angular`): the previously duplicated browser-init logic in each package is gone — all three call the shared `initLogtide`, passing their own `defaultService`. Behaviour is unchanged except for the SvelteKit default below.
+- **`@logtide/sveltekit`: default service is now `'sveltekit'`** when `service` is not provided in the options. Previously the SvelteKit client init set no default, so logs fell back to `'unknown'`; it now matches the Next.js (`'nextjs'`) and Angular (`'angular'`) behaviour. An explicit `service` still wins.
+
 ## [0.9.0] - 2026-06-22
 
 ### Added

@@ -1,3 +1,11 @@
+// Initialization
+export {
+  initLogtide,
+  buildBrowserIntegrations,
+  buildBrowserTransportWrapper,
+  type InitLogtideExtraOptions,
+} from './init';
+
 // Session
 export { getSessionId, resetSessionId } from './session';
 
