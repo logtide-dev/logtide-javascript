@@ -6,6 +6,9 @@ export {
   type InitLogtideExtraOptions,
 } from './init';
 
+// React error boundary (requires the optional `react` peer dependency)
+export { LogtideErrorBoundary } from './error-boundary';
+
 // Session
 export { getSessionId, resetSessionId } from './session';
 

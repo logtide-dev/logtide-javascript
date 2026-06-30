@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-06-30
+
+Audit of every package's public exports against the documentation, fixing all
+import/usage mismatches found (the same class of bug as the missing
+`initLogtide` export in 0.10.0).
+
+### Added
+
+- **`@logtide/browser`: `LogtideErrorBoundary` export** — the React error boundary documented at logtide.dev/integrations/react (`import { LogtideErrorBoundary } from '@logtide/browser'`) is now actually exported. `react` is declared as an **optional** peer dependency. `@logtide/nextjs/client` now re-exports this single shared implementation instead of its own copy.
+- **`@logtide/nuxt`: `useLogtide()` composable** — auto-imported composable (`const { captureLog, captureError, addBreadcrumb } = useLogtide()`) for manual capture, as shown in the docs. Previously documented but not implemented.
+- **`@logtide/cli`: `--path` option and `--apiKey` / `--apiUrl` aliases** for `sourcemaps upload` — the documented invocation `logtide sourcemaps upload --path ./dist --release 1.0.0 --apiKey KEY` now works. The directory may be passed either positionally or via `--path`; the canonical `--api-key` / `--api-url` forms continue to work.
+
+### Fixed
+
+- **`@logtide/nuxt`: `tracesSampleRate`, `apiUrl` and `apiKey` options are now honored.** The module previously dropped `tracesSampleRate` and ignored `apiUrl`/`apiKey` (it bailed out unless a `dsn` was set), contradicting the README. Configuration via `apiUrl` + `apiKey` (instead of `dsn`) now works on both client and server.
+- **`@logtide/sdk-node` README**: the Express/Fastify middleware examples now import from `@logtide/sdk-node/middleware` (where `logTideMiddleware` / `logTideFastifyPlugin` actually live) instead of the package root.
+- **`@logtide/nuxt` README**: corrected the documented default `service` value to `'nuxt'`.
+
 ## [0.10.0] - 2026-06-28
 
 ### Added

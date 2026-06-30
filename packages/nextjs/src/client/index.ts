@@ -1,6 +1,6 @@
 import { initLogtide as initBrowserLogtide, type BrowserClientOptions } from '@logtide/browser';
 
-export { LogtideErrorBoundary } from './error-boundary';
+export { LogtideErrorBoundary } from '@logtide/browser';
 export { trackNavigation } from './navigation';
 
 /**

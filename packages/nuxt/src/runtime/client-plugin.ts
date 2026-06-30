@@ -15,11 +15,14 @@ import { defineNuxtPlugin, useRuntimeConfig } from '#app';
  */
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig().public.logtide as {
-    dsn: string;
+    dsn?: string;
+    apiUrl?: string;
+    apiKey?: string;
     service?: string;
     environment?: string;
     release?: string;
     debug?: boolean;
+    tracesSampleRate?: number;
     browser?: {
       webVitals?: boolean;
       webVitalsSampleRate?: number;
@@ -28,11 +31,12 @@ export default defineNuxtPlugin((nuxtApp) => {
     };
   };
 
-  if (!config?.dsn) return;
+  if (!config?.dsn && !config?.apiUrl) return;
 
+  const dsnSource = { dsn: config.dsn, apiUrl: config.apiUrl, apiKey: config.apiKey };
   const browserOpts = config.browser ?? {};
   const browserIntegrations: Integration[] = [];
-  const apiUrl = resolveDSN({ dsn: config.dsn }).apiUrl;
+  const apiUrl = resolveDSN(dsnSource).apiUrl;
 
   if (browserOpts.webVitals) {
     browserIntegrations.push(
@@ -63,17 +67,20 @@ export default defineNuxtPlugin((nuxtApp) => {
     ? (inner: Transport) => new OfflineTransport({
         inner,
         beaconUrl: `${apiUrl}/api/v1/ingest`,
-        apiKey: resolveDSN({ dsn: config.dsn }).apiKey,
+        apiKey: resolveDSN(dsnSource).apiKey,
         debug: config.debug,
       })
     : undefined;
 
   hub.init({
     dsn: config.dsn,
+    apiUrl: config.apiUrl,
+    apiKey: config.apiKey,
     service: config.service ?? 'nuxt',
     environment: config.environment,
     release: config.release,
     debug: config.debug,
+    tracesSampleRate: config.tracesSampleRate,
     transportWrapper,
     integrations: [
       new GlobalErrorIntegration(),

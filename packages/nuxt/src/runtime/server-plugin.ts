@@ -28,21 +28,27 @@ function breadcrumbsToEvents(scope: Scope): SpanEvent[] {
  */
 export default defineNitroPlugin((nitroApp) => {
   const config = useRuntimeConfig().logtide as {
-    dsn: string;
+    dsn?: string;
+    apiUrl?: string;
+    apiKey?: string;
     service?: string;
     environment?: string;
     release?: string;
     debug?: boolean;
+    tracesSampleRate?: number;
   };
 
-  if (!config?.dsn) return;
+  if (!config?.dsn && !config?.apiUrl) return;
 
   hub.init({
     dsn: config.dsn,
+    apiUrl: config.apiUrl,
+    apiKey: config.apiKey,
     service: config.service ?? 'nuxt',
     environment: config.environment,
     release: config.release,
     debug: config.debug,
+    tracesSampleRate: config.tracesSampleRate,
     integrations: [new ConsoleIntegration(), new GlobalErrorIntegration()],
   });
 
