@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ['@logtide/types', '@logtide/core', 'web-vitals'],
+  external: ['@logtide/types', '@logtide/core', 'web-vitals', 'react', 'react/jsx-runtime'],
 });

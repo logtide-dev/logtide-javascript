@@ -73,7 +73,7 @@ All options are set in `nuxt.config.ts` under the `logtide` key:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `dsn` | `string` | **required** | DSN string: `https://lp_KEY@host/PROJECT` |
-| `service` | `string` | `'nuxt-app'` | Service name for log attribution |
+| `service` | `string` | `'nuxt'` | Service name for log attribution |
 | `environment` | `string` | — | Environment (e.g. `production`, `staging`) |
 | `release` | `string` | — | Release / version identifier |
 | `debug` | `boolean` | `false` | Enable debug logging |

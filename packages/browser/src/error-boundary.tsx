@@ -13,9 +13,11 @@ interface State {
 /**
  * React ErrorBoundary that automatically reports errors to LogTide.
  *
+ * Requires `react` (declared as an optional peer dependency).
+ *
  * @example
  * ```tsx
- * import { LogtideErrorBoundary } from '@logtide/nextjs/client';
+ * import { LogtideErrorBoundary } from '@logtide/browser';
  *
  * <LogtideErrorBoundary fallback={<div>Something went wrong</div>}>
  *   <App />

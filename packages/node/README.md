@@ -330,7 +330,8 @@ Auto-log all HTTP requests and responses.
 
 ```typescript
 import express from 'express';
-import { LogTideClient, logTideMiddleware } from '@logtide/sdk-node';
+import { LogTideClient } from '@logtide/sdk-node';
+import { logTideMiddleware } from '@logtide/sdk-node/middleware';
 
 const app = express();
 const logger = new LogTideClient({
@@ -368,7 +369,8 @@ app.listen(3000);
 
 ```typescript
 import Fastify from 'fastify';
-import { LogTideClient, logTideFastifyPlugin } from '@logtide/sdk-node';
+import { LogTideClient } from '@logtide/sdk-node';
+import { logTideFastifyPlugin } from '@logtide/sdk-node/middleware';
 
 const fastify = Fastify();
 const logger = new LogTideClient({
